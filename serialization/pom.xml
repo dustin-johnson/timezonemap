@@ -106,7 +106,7 @@
                         <configuration>
                             <name>archive-type</name>
                             <value>${os.detected.name}</value>
-                            <regex>linux</regex>
+                            <regex>.*linux.*</regex>
                             <replacement>tar.gz</replacement>
                             <failIfNoMatch>false</failIfNoMatch>
                         </configuration>
@@ -119,7 +119,7 @@
                         <configuration>
                             <name>archive-type</name>
                             <value>${os.detected.name}</value>
-                            <regex>windows</regex>
+                            <regex>.*windows.*</regex>
                             <replacement>zip</replacement>
                             <failIfNoMatch>false</failIfNoMatch>
                         </configuration>
