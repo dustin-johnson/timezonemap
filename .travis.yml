@@ -2,10 +2,3 @@ language: java
 cache:
   directories:
     - $HOME/.m2
-addons:
-  apt:
-    sources:
-      - ubuntu-toolchain-r-test
-    packages:
-      - libstdc++-4.9-dev
-      - libstdc++6
