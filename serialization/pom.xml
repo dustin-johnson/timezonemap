@@ -98,30 +98,40 @@
                             </sources>
                         </configuration>
                     </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.codehaus.gmavenplus</groupId>
+                <artifactId>gmavenplus-plugin</artifactId>
+                <version>1.6.2</version>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.codehaus.groovy</groupId>
+                        <artifactId>groovy-all</artifactId>
+                        <version>2.5.3</version>
+                        <type>pom</type>
+                        <scope>runtime</scope>
+                    </dependency>
+                    <dependency>
+                        <groupId>ch.qos.logback</groupId>
+                        <artifactId>logback-classic</artifactId>
+                        <version>1.0.13</version>
+                        <scope>runtime</scope>
+                    </dependency>
+                </dependencies>
+                <executions>
                     <execution>
-                        <id>regex-property1</id>
+                        <id>add-dynamic-properties</id>
+                        <phase>initialize</phase>
                         <goals>
-                            <goal>regex-property</goal>
+                            <goal>execute</goal>
                         </goals>
                         <configuration>
-                            <name>archive-type</name>
-                            <value>${os.detected.name}</value>
-                            <regex>.*linux.*</regex>
-                            <replacement>tar.gz</replacement>
-                            <failIfNoMatch>false</failIfNoMatch>
-                        </configuration>
-                    </execution>
-                    <execution>
-                        <id>regex-property2</id>
-                        <goals>
-                            <goal>regex-property</goal>
-                        </goals>
-                        <configuration>
-                            <name>archive-type</name>
-                            <value>${os.detected.name}</value>
-                            <regex>.*windows.*</regex>
-                            <replacement>zip</replacement>
-                            <failIfNoMatch>false</failIfNoMatch>
+                            <scripts>
+                                <script>
+                                    <![CDATA[project.properties.setProperty('archive-type', "${os.detected.name}" == "linux" ? "tar.gz" : "zip")]]>
+                                </script>
+                            </scripts>
                         </configuration>
                     </execution>
                 </executions>
