@@ -50,7 +50,7 @@
                     <workingDirectory>${project.basedir}/../builder/target</workingDirectory>
                     <arguments>
                         <argument>-jar</argument>
-                        <argument>timezonemap-builder-${project.version}.jar</argument>
+                        <argument>builder-${project.version}.jar</argument>
                         <argument>2018g</argument>
                         <argument>${project.build.directory}/classes/timezonemap.tar.zstd</argument>
                     </arguments>

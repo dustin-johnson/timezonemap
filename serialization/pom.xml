@@ -23,6 +23,13 @@
     </properties>
 
     <build>
+        <extensions>
+            <extension>
+                <groupId>kr.motd.maven</groupId>
+                <artifactId>os-maven-plugin</artifactId>
+                <version>1.6.1</version>
+            </extension>
+        </extensions>
         <plugins>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
@@ -46,7 +53,7 @@
                                     <classifier>distribution-linux</classifier>
                                     -->
                                     <type>zip</type>
-                                    <classifier>distribution-windows</classifier>
+                                    <classifier>distribution-${os.detected.name}</classifier>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
                                 </artifactItem>
