@@ -20,6 +20,7 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 
+import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Serialization;
 
 public final class TimeZoneEngine {
@@ -42,7 +43,7 @@ public final class TimeZoneEngine {
      */
     public static TimeZoneEngine forRegion(double minDegreesLatitude, double minDegreesLongitude,
             double maxDegreesLatitude, double maxDegreesLongitude) {
-        try (InputStream inputStream = TimeZoneEngine.class.getResourceAsStream("/timezonemap.tar.zstd");
+        try (InputStream inputStream = DataLocator.getDataInputStream();
                 TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(
                         new ZstdCompressorInputStream(inputStream))) {
 
@@ -57,6 +58,8 @@ public final class TimeZoneEngine {
                                             byteBuffer.position(), byteBuffer.remaining())) != -1) {
                                         byteBuffer.position(byteBuffer.position() + readLength);
                                     }
+
+                                    byteBuffer.position(0);
 
                                     return byteBuffer;
                                 } catch (IOException e) {
