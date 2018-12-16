@@ -48,11 +48,7 @@
                                     <groupId>com.github.davidmoten</groupId>
                                     <artifactId>flatbuffers-compiler</artifactId>
                                     <version>1.10.0.2</version>
-                                    <!--
-                                    <type>tar.gz</type>
-                                    <classifier>distribution-linux</classifier>
-                                    -->
-                                    <type>zip</type>
+                                    <type>${archive-type}</type>
                                     <classifier>distribution-${os.detected.name}</classifier>
                                     <overWrite>true</overWrite>
                                     <outputDirectory>${project.build.directory}</outputDirectory>
@@ -88,7 +84,7 @@
             <plugin>
                 <groupId>org.codehaus.mojo</groupId>
                 <artifactId>build-helper-maven-plugin</artifactId>
-                <version>1.10</version>
+                <version>1.7</version>
                 <executions>
                     <execution>
                         <id>add-source</id>
@@ -100,6 +96,32 @@
                             <sources>
                                 <source>${fbs.generated.sources}</source>
                             </sources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>regex-property1</id>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>archive-type</name>
+                            <value>${os.detected.name}</value>
+                            <regex>linux</regex>
+                            <replacement>tar.gz</replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>regex-property2</id>
+                        <goals>
+                            <goal>regex-property</goal>
+                        </goals>
+                        <configuration>
+                            <name>archive-type</name>
+                            <value>${os.detected.name}</value>
+                            <regex>windows</regex>
+                            <replacement>zip</replacement>
+                            <failIfNoMatch>false</failIfNoMatch>
                         </configuration>
                     </execution>
                 </executions>
