@@ -5,16 +5,16 @@
     <modelVersion>4.0.0</modelVersion>
 
     <parent>
-        <groupId>us.dustinj</groupId>
+        <groupId>us.dustinj.timezonemap</groupId>
         <artifactId>timezonemap</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>timezonemap-dist</artifactId>
+    <artifactId>dist</artifactId>
     <packaging>jar</packaging>
 
-    <name>dist</name>
+    <name>Distribution Package</name>
 
     <dependencies>
         <dependency>
