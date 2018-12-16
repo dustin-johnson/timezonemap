@@ -8,7 +8,7 @@ import org.mockito.Mock;
 public class DataLocatorTest {
 
     @Test
-    public void name() {
-        DataLocator.getDataInputStream();
+    public void noExceptionAndNotNull() {
+        assertThat(DataLocator.getDataInputStream()).isNotNull();
     }
 }
