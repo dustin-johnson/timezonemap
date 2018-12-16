@@ -1,0 +1,13 @@
+namespace us.dustinj.timezonemap.serialization.flatbuffer;
+
+table TimeZone {
+    timeZoneName:string;
+    region:[Point];
+}
+
+struct Point {
+    latitude:float;
+    longitude:float;
+}
+
+root_type TimeZone;
