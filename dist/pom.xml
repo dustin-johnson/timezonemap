@@ -18,13 +18,13 @@
 
     <dependencies>
         <dependency>
-            <groupId>us.dustinj</groupId>
-            <artifactId>timezonemap-data</artifactId>
+            <groupId>us.dustinj.timezonemap</groupId>
+            <artifactId>data</artifactId>
             <version>${version}</version>
         </dependency>
         <dependency>
-            <groupId>us.dustinj</groupId>
-            <artifactId>timezonemap-serialization</artifactId>
+            <groupId>us.dustinj.timezonemap</groupId>
+            <artifactId>serialization</artifactId>
             <version>${version}</version>
         </dependency>
 

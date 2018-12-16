@@ -61,8 +61,8 @@
 
     <dependencies>
         <dependency>
-            <groupId>us.dustinj</groupId>
-            <artifactId>timezonemap-builder</artifactId>
+            <groupId>us.dustinj.timezonemap</groupId>
+            <artifactId>builder</artifactId>
             <version>${version}</version>
             <scope>compile</scope>
         </dependency>
