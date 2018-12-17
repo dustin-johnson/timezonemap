@@ -1,6 +1,7 @@
 package us.dustinj.timezonemap;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import java.util.List;
 import java.util.Optional;
@@ -10,7 +11,6 @@ import java.util.stream.Stream;
 import org.junit.Test;
 
 public class TimeZoneEngineTest {
-    private static final TimeZoneEngine EVERYWHERE_ENGINE = TimeZoneEngine.forEverywhere();
 
     private static class Location {
         final float latitude;
@@ -61,8 +61,10 @@ public class TimeZoneEngineTest {
                 new Location(-47.91847f, 106.91770f, "Etc/GMT-7", "Ulaanbaatar, Mongolia"))
                 .collect(Collectors.toList());
 
+        TimeZoneEngine everywhereEngine = TimeZoneEngine.forEverywhere();
+
         for (Location location : locations) {
-            Optional<String> everywhereResult = EVERYWHERE_ENGINE.query(location.latitude, location.longitude);
+            Optional<String> everywhereResult = everywhereEngine.query(location.latitude, location.longitude);
             assertThat(everywhereResult)
                     .as("Everywhere - " + location.description)
                     .isEqualTo(Optional.ofNullable(location.timeZoneId));
@@ -77,5 +79,20 @@ public class TimeZoneEngineTest {
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResult);
         }
+    }
+
+    @Test
+    public void scopedRegionTest() {
+        TimeZoneEngine scopedEngine = TimeZoneEngine.forRegion(
+                3.97131, 22.78090,
+                10.29621, 28.10539);
+
+        assertThatThrownBy(() -> scopedEngine.query(3.96, 25.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(10.4, 25.0)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(6.0, 22.7)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(6.0, 28.2)).isInstanceOf(IllegalArgumentException.class);
+
+        // assertThat(scopedEngine.query(10.29621, 22.78090)).contains("test");
+        // assertThat(scopedEngine.query(3.97131, 28.10539)).contains("test");
     }
 }
