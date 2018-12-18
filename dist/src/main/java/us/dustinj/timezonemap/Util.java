@@ -11,8 +11,6 @@ import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
@@ -26,7 +24,6 @@ import us.dustinj.timezonemap.serialization.LatLon;
 
 final class Util {
     static final SpatialReference SPATIAL_REFERENCE = SpatialReference.create(4326); // WGS84_WKID = 4326
-    private static final Logger LOG = LoggerFactory.getLogger(Util.class);
 
     // Utility class
     private Util() {}
@@ -76,7 +73,7 @@ final class Util {
         final Envelope2D extents;
         final TimeZone timeZone;
 
-        public ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
+        private ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
             this.extents = extents;
             this.timeZone = timeZone;
         }
@@ -88,7 +85,7 @@ final class Util {
         return timeZones
                 .map(timeZone -> {
                     Envelope2D extents = new Envelope2D();
-                    timeZone.region.queryEnvelope2D(extents);
+                    timeZone.getRegion().queryEnvelope2D(extents);
 
                     return new ExtentsAndTimeZone(extents, timeZone);
                 })
@@ -102,7 +99,7 @@ final class Util {
                     }
 
                     GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
-                            new SimpleGeometryCursor(t.timeZone.region),
+                            new SimpleGeometryCursor(t.timeZone.getRegion()),
                             new SimpleGeometryCursor(indexAreaPolygon),
                             SPATIAL_REFERENCE, null, 4);
 
@@ -115,10 +112,8 @@ final class Util {
                     }
 
                     return list.stream()
-                            .map(g -> new TimeZone(t.timeZone.zoneId, g));
+                            .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
                 })
-                // TODO - Remove debug output
-                .peek(e -> LOG.info(e.zoneId))
                 .collect(Collectors.toList());
     }
 }

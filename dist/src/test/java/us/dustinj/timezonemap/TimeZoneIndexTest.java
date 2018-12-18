@@ -3,15 +3,26 @@ package us.dustinj.timezonemap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import java.sql.Time;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
-public class TimeZoneEngineTest {
+import com.esri.core.geometry.GeometryEngine;
+import com.esri.core.geometry.GeometryException;
+import com.google.common.collect.Multimaps;
+import com.google.common.collect.Streams;
+
+public class TimeZoneIndexTest {
+    private static final TimeZoneIndex EVERYWHERE_INDEX = TimeZoneIndex.forEverywhere();
 
     private static class Location {
         final float latitude;
@@ -34,7 +45,7 @@ public class TimeZoneEngineTest {
                 new Location(39.664104f, -7.535549f, "Europe/Madrid", "Boarder between Spain and Portugal"),
                 new Location(39.361070f, -9.407464f, "Europe/Lisbon", "Almost off the coast of Portugal"),
                 new Location(39.361532f, -9.440421f, "Europe/Lisbon", "Off the coast of Portugal by 5km"),
-                // new Location(39.315657f, -9.920789f, null, "~20km off the coast of Portugal"),
+                new Location(39.315657f, -9.920789f, "Etc/GMT+1", "~20km off the coast of Portugal"),
                 new Location(36.39823f, -4.35621f, "Europe/Madrid", "Off the coast of Spain by 30km"),
                 new Location(36.39258f, -4.36047f, "Etc/GMT", "Off the coast of Spain by 31km"),
                 new Location(51.870315f, -8.408394f, "Europe/Dublin", "Cork, Ireland"),
@@ -58,23 +69,17 @@ public class TimeZoneEngineTest {
                 new Location(21.58224f, 39.16403f, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
                 new Location(-54.80693f, -68.30734f, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
                 new Location(-54.93413f, -67.61091f, "America/Punta_Arenas", "Puerto Williams, Chile"),
-                // new Location(-70.91694f, 54.67198f, "Antarctica/Syowa", "Antarctica"),
+                new Location(-70.91694f, 54.67198f, "Antarctica/Syowa", "Antarctica"),
                 new Location(-47.91847f, 106.91770f, "Etc/GMT-7", "Ulaanbaatar, Mongolia"))
                 .collect(Collectors.toList());
 
-        TimeZoneEngine everywhereEngine = TimeZoneEngine.forEverywhere();
-        net.iakovlev.timeshape.TimeZoneEngine everyWhereComparison = net.iakovlev.timeshape.TimeZoneEngine.initialize();
-
         for (Location location : locations) {
-            Optional<String> everywhereResult = everywhereEngine.query(location.latitude, location.longitude);
+            Optional<String> everywhereResult = EVERYWHERE_INDEX.query(location.latitude, location.longitude);
             assertThat(everywhereResult)
                     .as("Everywhere - " + location.description)
                     .isEqualTo(Optional.ofNullable(location.timeZoneId));
-            assertThat(everywhereResult)
-                    .as("Everywhere comparison - " + location.description)
-                    .isEqualTo(everyWhereComparison.query(location.latitude, location.longitude).map(Object::toString));
 
-            Optional<String> scopedResult = TimeZoneEngine.forRegion(
+            Optional<String> scopedResult = TimeZoneIndex.forRegion(
                     location.latitude - 1,
                     location.longitude - 1,
                     location.latitude + 1,
@@ -87,8 +92,45 @@ public class TimeZoneEngineTest {
     }
 
     @Test
+    @Ignore
+    public void outputTimezones() throws IOException {
+        Path outputPath =
+                new File(TimeZoneIndexTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                        .toPath()                 // /target/test-classes
+                        .getParent()              // /target
+                        .resolve("shape_output"); // /target/shape_output
+
+        assertThat(outputPath.toFile().mkdirs()).isTrue();
+
+        List<TimeZone> exportTimeZones =
+                Multimaps.index(EVERYWHERE_INDEX.getKnownTimeZones(), TimeZone::getZoneId).asMap().entrySet().stream()
+                        .flatMap(e -> Streams.mapWithIndex(e.getValue().stream(),
+                                (t, i) -> new TimeZone(t.getZoneId().replace("/", "_") + "_" + i, t.getRegion())))
+                        .collect(Collectors.toList());
+
+        for (TimeZone timeZone : exportTimeZones) {
+            try {
+                Files.write(outputPath.resolve(timeZone.getZoneId() + ".json"),
+                        GeometryEngine.geometryToGeoJson(timeZone.getRegion()).getBytes(StandardCharsets.UTF_8));
+            } catch (GeometryException e) {
+                System.err.println(e.getMessage() + " - " + timeZone.getZoneId());
+            }
+        }
+    }
+
+    @Test
+    public void testKnownZones() {
+        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(1_300);
+    }
+
+    @Test
+    public void testKnownZoneIds() {
+        assertThat(EVERYWHERE_INDEX.getKnownZoneIds().size()).isGreaterThan(400);
+    }
+
+    @Test
     public void scopedRegionTest() {
-        TimeZoneEngine scopedEngine = TimeZoneEngine.forRegion(
+        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 

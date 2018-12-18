@@ -48,10 +48,7 @@ public class Main {
         GeoJsonObject geometry = feature.getGeometry();
 
         if (geometry instanceof Polygon) {
-            List<LatLon> allPoints = Stream.concat(
-                    ((Polygon) geometry).getExteriorRing().stream(),
-                    ((Polygon) geometry).getInteriorRings().stream()
-                            .flatMap(Collection::stream))
+            List<LatLon> allPoints = ((Polygon) geometry).getExteriorRing().stream()
                     .map(point -> new LatLon((float) point.getLatitude(), (float) point.getLongitude()))
                     .collect(Collectors.toList());
 

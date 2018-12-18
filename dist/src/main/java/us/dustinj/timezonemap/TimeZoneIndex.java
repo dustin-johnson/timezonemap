@@ -3,6 +3,7 @@ package us.dustinj.timezonemap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -23,25 +24,25 @@ import com.esri.core.geometry.Polygon;
 import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Serialization;
 
-public final class TimeZoneEngine {
-    private static final Logger LOG = LoggerFactory.getLogger(TimeZoneEngine.class);
+public final class TimeZoneIndex {
+    private static final Logger LOG = LoggerFactory.getLogger(TimeZoneIndex.class);
 
-    private final List<TimeZone> zoneIds;
+    private final List<TimeZone> timeZones;
     private final Envelope2D indexedArea;
 
     /**
-     * Creates a new instance of {@link TimeZoneEngine} and initializes it with an index for the entire world.
+     * Creates a new instance of {@link TimeZoneIndex} and initializes it with an index for the entire world.
      * This is a blocking long running operation.
      */
-    public static TimeZoneEngine forEverywhere() {
+    public static TimeZoneIndex forEverywhere() {
         return forRegion(-90.0, -180.0, 90.0, 180.0);
     }
 
     /**
-     * Creates a new instance of {@link TimeZoneEngine} and initializes it with an index valid for anywhere
+     * Creates a new instance of {@link TimeZoneIndex} and initializes it with an index valid for anywhere
      * within the provided coordinates. This is a blocking long running operation.
      */
-    public static TimeZoneEngine forRegion(double minDegreesLatitude, double minDegreesLongitude,
+    public static TimeZoneIndex forRegion(double minDegreesLatitude, double minDegreesLongitude,
             double maxDegreesLatitude, double maxDegreesLongitude) {
         try (InputStream inputStream = DataLocator.getDataInputStream();
                 TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(
@@ -74,30 +75,34 @@ public final class TimeZoneEngine {
                     Math.nextUp(maxDegreesLongitude),
                     Math.nextUp(maxDegreesLatitude));
 
-            return new TimeZoneEngine(Util.build(timeZones, indexArea), indexArea);
+            return new TimeZoneIndex(Util.build(timeZones, indexArea), indexArea);
         } catch (NullPointerException | IOException e) {
             LOG.error("Unable to read resource file", e);
             throw new RuntimeException(e);
         }
     }
 
-    private TimeZoneEngine(List<TimeZone> timeZones, Envelope2D indexedArea) {
+    private TimeZoneIndex(List<TimeZone> timeZones, Envelope2D indexedArea) {
         LOG.info("Initialized index with {} time zones described with {} points",
                 timeZones.size(),
                 timeZones.stream()
-                        .filter(e -> e.region instanceof Polygon)
-                        .mapToLong(e -> ((Polygon) e.region).getPointCount())
+                        .map(TimeZone::getRegion)
+                        .mapToLong(Polygon::getPointCount)
                         .sum());
 
-        this.zoneIds = timeZones;
+        this.timeZones = timeZones;
         this.indexedArea = indexedArea;
     }
 
     public List<String> getKnownZoneIds() {
-        return zoneIds.stream()
-                .map(e -> e.zoneId)
+        return timeZones.stream()
+                .map(TimeZone::getZoneId)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    public List<TimeZone> getKnownTimeZones() {
+        return Collections.unmodifiableList(this.timeZones);
     }
 
     public Optional<String> query(double degreesLatitude, double degreesLongitude) {
@@ -107,15 +112,15 @@ public final class TimeZoneEngine {
             throw new IllegalArgumentException("Requested point is outside the indexed area");
         }
 
-        return this.zoneIds.parallelStream()
-                .filter(e -> GeometryEngine.contains(e.region, point, Util.SPATIAL_REFERENCE) ||
-                        GeometryEngine.touches(e.region, point, Util.SPATIAL_REFERENCE))
+        return this.timeZones.parallelStream()
+                .filter(t -> GeometryEngine.contains(t.getRegion(), point, Util.SPATIAL_REFERENCE) ||
+                        GeometryEngine.touches(t.getRegion(), point, Util.SPATIAL_REFERENCE))
                 // Sort smallest first, as we want the most specific region if there is an overlap.
                 // Note, since we clipped the geometries to the index area when we indexed them, we likely introduced
                 // a bug where large regions could look small as they only slightly overlap. I think the only way to
                 // solve this is to remove the clipping. Since this is an unlikely defect, I'm ignoring it for now.
-                .sorted(Comparator.comparingDouble(e -> e.region.calculateArea2D()))
-                .map(e -> e.zoneId)
+                .sorted(Comparator.comparingDouble(t -> t.getRegion().calculateArea2D()))
+                .map(TimeZone::getZoneId)
                 .findFirst();
     }
 }
