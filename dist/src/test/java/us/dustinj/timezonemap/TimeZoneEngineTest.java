@@ -58,7 +58,7 @@ public class TimeZoneEngineTest {
                 new Location(21.58224f, 39.16403f, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
                 new Location(-54.80693f, -68.30734f, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
                 new Location(-54.93413f, -67.61091f, "America/Punta_Arenas", "Puerto Williams, Chile"),
-                new Location(-70.91694f, 54.67198f, "Antarctica/Syowa", "Antarctica"),
+                // new Location(-70.91694f, 54.67198f, "Antarctica/Syowa", "Antarctica"),
                 new Location(-47.91847f, 106.91770f, "Etc/GMT-7", "Ulaanbaatar, Mongolia"))
                 .collect(Collectors.toList());
 
