@@ -108,6 +108,7 @@
 
                     <execution>
                         <id>code-coverage-check</id>
+                        <phase>test</phase>
                         <goals>
                             <goal>check</goal>
                         </goals>
