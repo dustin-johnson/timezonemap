@@ -2,3 +2,6 @@ language: java
 cache:
   directories:
     - $HOME/.m2
+env:
+  global:
+    - CODECOV_TOKEN="95f2dcf0-748b-4414-841c-ac33a1c3cd28"

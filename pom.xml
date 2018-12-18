@@ -78,7 +78,6 @@
                 </configuration>
                 <executions>
                     <execution>
-                        <id>prepare-code-coverage-agent</id>
                         <goals>
                             <goal>prepare-agent</goal>
                         </goals>
