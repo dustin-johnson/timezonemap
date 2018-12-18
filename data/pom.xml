@@ -16,6 +16,10 @@
 
     <name>Data</name>
 
+    <properties>
+        <jacoco.minimum.covered.ratio>0.30</jacoco.minimum.covered.ratio>
+    </properties>
+
     <build>
         <plugins>
             <plugin>
