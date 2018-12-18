@@ -54,5 +54,12 @@
             <version>1.7.25</version>
         </dependency>
 
+        <dependency>
+            <groupId>net.iakovlev</groupId>
+            <artifactId>timeshape</artifactId>
+            <version>2018d.6</version>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 </project>

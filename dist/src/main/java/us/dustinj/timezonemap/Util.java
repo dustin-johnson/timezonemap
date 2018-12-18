@@ -72,33 +72,50 @@ final class Util {
         };
     }
 
+    private static class ExtentsAndTimeZone {
+        final Envelope2D extents;
+        final TimeZone timeZone;
+
+        public ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
+            this.extents = extents;
+            this.timeZone = timeZone;
+        }
+    }
+
     static List<TimeZone> build(Stream<TimeZone> timeZones, Envelope2D indexArea) {
         Polygon indexAreaPolygon = envelopeToPolygon(indexArea);
 
         return timeZones
-                // Throw out anything that doesn't at least partially overlap with the index area.
-                .filter(timeZone -> {
-                    Envelope2D newShapeExtents = new Envelope2D();
-                    timeZone.region.queryEnvelope2D(newShapeExtents);
+                .map(timeZone -> {
+                    Envelope2D extents = new Envelope2D();
+                    timeZone.region.queryEnvelope2D(extents);
 
-                    return indexArea.isIntersecting(newShapeExtents);
+                    return new ExtentsAndTimeZone(extents, timeZone);
                 })
+                // Throw out anything that doesn't at least partially overlap with the index area.
+                .filter(t -> indexArea.isIntersecting(t.extents))
                 // Clip the shape to our indexArea so we don't have to keep large time zones that may only slightly
                 // intersect with the region we're indexing.
-                .flatMap(timeZone -> {
+                .flatMap(t -> {
+                    if (indexArea.contains(t.extents)) {
+                        return Stream.of(t.timeZone);
+                    }
+
                     GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
-                            new SimpleGeometryCursor(timeZone.region),
+                            new SimpleGeometryCursor(t.timeZone.region),
                             new SimpleGeometryCursor(indexAreaPolygon),
                             SPATIAL_REFERENCE, null, 4);
 
-                    List<Geometry> list = new ArrayList<>();
+                    List<Polygon> list = new ArrayList<>();
                     Geometry geometry;
                     while ((geometry = intersectedGeometries.next()) != null) {
-                        list.add(geometry);
+                        if (geometry instanceof Polygon) {
+                            list.add((Polygon) geometry);
+                        }
                     }
 
                     return list.stream()
-                            .map(g -> new TimeZone(timeZone.zoneId, g));
+                            .map(g -> new TimeZone(t.timeZone.zoneId, g));
                 })
                 // TODO - Remove debug output
                 .peek(e -> LOG.info(e.zoneId))

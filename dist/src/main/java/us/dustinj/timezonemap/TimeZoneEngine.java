@@ -68,8 +68,11 @@ public final class TimeZoneEngine {
                             })
                             .map(Serialization::deserialize)
                             .map(Util::convertToEsriBackedTimeZone);
-            Envelope2D indexArea =
-                    new Envelope2D(minDegreesLongitude, minDegreesLatitude, maxDegreesLongitude, maxDegreesLatitude);
+            Envelope2D indexArea = new Envelope2D(
+                    Math.nextDown(minDegreesLongitude),
+                    Math.nextDown(minDegreesLatitude),
+                    Math.nextUp(maxDegreesLongitude),
+                    Math.nextUp(maxDegreesLatitude));
 
             return new TimeZoneEngine(Util.build(timeZones, indexArea), indexArea);
         } catch (NullPointerException | IOException e) {
@@ -100,12 +103,13 @@ public final class TimeZoneEngine {
     public Optional<String> query(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
-        if (!this.indexedArea.contains(point)) {
+        if (!this.indexedArea.containsExclusive(point.getXY())) {
             throw new IllegalArgumentException("Requested point is outside the indexed area");
         }
 
         return this.zoneIds.parallelStream()
-                .filter(e -> GeometryEngine.contains(e.region, point, Util.SPATIAL_REFERENCE))
+                .filter(e -> GeometryEngine.contains(e.region, point, Util.SPATIAL_REFERENCE) ||
+                        GeometryEngine.touches(e.region, point, Util.SPATIAL_REFERENCE))
                 // Sort smallest first, as we want the most specific region if there is an overlap.
                 // Note, since we clipped the geometries to the index area when we indexed them, we likely introduced
                 // a bug where large regions could look small as they only slightly overlap. I think the only way to

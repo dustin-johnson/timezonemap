@@ -3,6 +3,7 @@ package us.dustinj.timezonemap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.sql.Time;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -62,12 +63,16 @@ public class TimeZoneEngineTest {
                 .collect(Collectors.toList());
 
         TimeZoneEngine everywhereEngine = TimeZoneEngine.forEverywhere();
+        net.iakovlev.timeshape.TimeZoneEngine everyWhereComparison = net.iakovlev.timeshape.TimeZoneEngine.initialize();
 
         for (Location location : locations) {
             Optional<String> everywhereResult = everywhereEngine.query(location.latitude, location.longitude);
             assertThat(everywhereResult)
                     .as("Everywhere - " + location.description)
                     .isEqualTo(Optional.ofNullable(location.timeZoneId));
+            assertThat(everywhereResult)
+                    .as("Everywhere comparison - " + location.description)
+                    .isEqualTo(everyWhereComparison.query(location.latitude, location.longitude).map(Object::toString));
 
             Optional<String> scopedResult = TimeZoneEngine.forRegion(
                     location.latitude - 1,
@@ -87,12 +92,18 @@ public class TimeZoneEngineTest {
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scopedEngine.query(3.96, 25.0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(10.4, 25.0)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(6.0, 22.7)).isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(6.0, 28.2)).isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(Math.nextUp(10.29621), 22.78090))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(10.29621, Math.nextDown(22.78090)))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(Math.nextDown(3.97131), 28.10539))
+                .isInstanceOf(IllegalArgumentException.class);
+        assertThatThrownBy(() -> scopedEngine.query(3.97131, Math.nextUp(28.10539)))
+                .isInstanceOf(IllegalArgumentException.class);
 
-        // assertThat(scopedEngine.query(10.29621, 22.78090)).contains("test");
-        // assertThat(scopedEngine.query(3.97131, 28.10539)).contains("test");
+        assertThat(scopedEngine.query(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
+        assertThat(scopedEngine.query(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
+
+        assertThat(scopedEngine.query(10.225818, 24.293622)).contains("Africa/Khartoum");
     }
 }
