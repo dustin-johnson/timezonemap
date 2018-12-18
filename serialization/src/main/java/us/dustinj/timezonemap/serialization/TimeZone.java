@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Objects;
 
 public final class TimeZone {
-    final String timeZoneId;
-    final List<LatLon> region;
+    private final String timeZoneId;
+    private final List<LatLon> region;
 
     public TimeZone(String timeZoneId, List<LatLon> region) {
         this.timeZoneId = timeZoneId;

@@ -16,18 +16,18 @@ public final class Serialization {
 
     public static ByteBuffer serialize(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         FlatBufferBuilder builder =
-                new FlatBufferBuilder(timeZone.region.size() * 8 + timeZone.timeZoneId.length() * 2 + 256);
+                new FlatBufferBuilder(timeZone.getRegion().size() * 8 + timeZone.getTimeZoneId().length() * 2 + 256);
 
         // Reverse the list as flat buffers reverses it during serialization and we'd prefer to keep the original
         // order, even if we don't have a specific reason for doing so.
-        List<LatLon> reversedPolygon = new ArrayList<>(timeZone.region);
+        List<LatLon> reversedPolygon = new ArrayList<>(timeZone.getRegion());
         Collections.reverse(reversedPolygon);
 
-        TimeZone.startRegionVector(builder, timeZone.region.size());
+        TimeZone.startRegionVector(builder, timeZone.getRegion().size());
         reversedPolygon.forEach(point -> Point.createPoint(builder, point.latitude, point.longitude));
         int polygonOffset = builder.endVector();
 
-        builder.finish(TimeZone.createTimeZone(builder, builder.createString(timeZone.timeZoneId), polygonOffset));
+        builder.finish(TimeZone.createTimeZone(builder, builder.createString(timeZone.getTimeZoneId()), polygonOffset));
 
         return builder.dataBuffer();
     }
