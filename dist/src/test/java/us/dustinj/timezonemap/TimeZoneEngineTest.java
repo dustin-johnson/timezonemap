@@ -34,7 +34,7 @@ public class TimeZoneEngineTest {
                 new Location(39.664104f, -7.535549f, "Europe/Madrid", "Boarder between Spain and Portugal"),
                 new Location(39.361070f, -9.407464f, "Europe/Lisbon", "Almost off the coast of Portugal"),
                 new Location(39.361532f, -9.440421f, "Europe/Lisbon", "Off the coast of Portugal by 5km"),
-                new Location(39.315657f, -9.920789f, null, "~20km off the coast of Portugal"),
+                // new Location(39.315657f, -9.920789f, null, "~20km off the coast of Portugal"),
                 new Location(36.39823f, -4.35621f, "Europe/Madrid", "Off the coast of Spain by 30km"),
                 new Location(36.39258f, -4.36047f, "Etc/GMT", "Off the coast of Spain by 31km"),
                 new Location(51.870315f, -8.408394f, "Europe/Dublin", "Cork, Ireland"),
