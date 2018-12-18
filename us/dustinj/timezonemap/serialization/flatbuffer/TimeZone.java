@@ -17,29 +17,24 @@ public final class TimeZone extends Table {
   public String timeZoneName() { int o = __offset(4); return o != 0 ? __string(o + bb_pos) : null; }
   public ByteBuffer timeZoneNameAsByteBuffer() { return __vector_as_bytebuffer(4, 1); }
   public ByteBuffer timeZoneNameInByteBuffer(ByteBuffer _bb) { return __vector_in_bytebuffer(_bb, 4, 1); }
-  public Polygon exteriorRegion() { return exteriorRegion(new Polygon()); }
-  public Polygon exteriorRegion(Polygon obj) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(o + bb_pos), bb) : null; }
-  public Polygon interiorRegions(int j) { return interiorRegions(new Polygon(), j); }
-  public Polygon interiorRegions(Polygon obj, int j) { int o = __offset(8); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
-  public int interiorRegionsLength() { int o = __offset(8); return o != 0 ? __vector_len(o) : 0; }
+  public Polygon regions(int j) { return regions(new Polygon(), j); }
+  public Polygon regions(Polygon obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
+  public int regionsLength() { int o = __offset(6); return o != 0 ? __vector_len(o) : 0; }
 
   public static int createTimeZone(FlatBufferBuilder builder,
       int timeZoneNameOffset,
-      int exteriorRegionOffset,
-      int interiorRegionsOffset) {
-    builder.startObject(3);
-    TimeZone.addInteriorRegions(builder, interiorRegionsOffset);
-    TimeZone.addExteriorRegion(builder, exteriorRegionOffset);
+      int regionsOffset) {
+    builder.startObject(2);
+    TimeZone.addRegions(builder, regionsOffset);
     TimeZone.addTimeZoneName(builder, timeZoneNameOffset);
     return TimeZone.endTimeZone(builder);
   }
 
-  public static void startTimeZone(FlatBufferBuilder builder) { builder.startObject(3); }
+  public static void startTimeZone(FlatBufferBuilder builder) { builder.startObject(2); }
   public static void addTimeZoneName(FlatBufferBuilder builder, int timeZoneNameOffset) { builder.addOffset(0, timeZoneNameOffset, 0); }
-  public static void addExteriorRegion(FlatBufferBuilder builder, int exteriorRegionOffset) { builder.addOffset(1, exteriorRegionOffset, 0); }
-  public static void addInteriorRegions(FlatBufferBuilder builder, int interiorRegionsOffset) { builder.addOffset(2, interiorRegionsOffset, 0); }
-  public static int createInteriorRegionsVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
-  public static void startInteriorRegionsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
+  public static void addRegions(FlatBufferBuilder builder, int regionsOffset) { builder.addOffset(1, regionsOffset, 0); }
+  public static int createRegionsVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
+  public static void startRegionsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
   public static int endTimeZone(FlatBufferBuilder builder) {
     int o = builder.endObject();
     return o;

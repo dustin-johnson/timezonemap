@@ -2,8 +2,7 @@ namespace us.dustinj.timezonemap.serialization.flatbuffer;
 
 table TimeZone {
     timeZoneName:string;
-    exteriorRegion:Polygon;
-    interiorRegions:[Polygon];
+    regions:[Polygon];
 }
 
 table Polygon {

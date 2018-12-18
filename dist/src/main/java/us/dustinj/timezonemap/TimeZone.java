@@ -1,6 +1,5 @@
 package us.dustinj.timezonemap;
 
-import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.Polygon;
 
 class TimeZone {

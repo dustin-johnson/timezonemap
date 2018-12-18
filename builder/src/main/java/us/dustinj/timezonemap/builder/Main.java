@@ -51,27 +51,23 @@ public class Main {
                 .collect(Collectors.toList());
     }
 
-    private static Stream<ByteBuffer> convertFeature(Feature feature) {
+    private static ByteBuffer convertFeature(Feature feature) {
         String timeZoneId = feature.getProperties().get("tzid").toString();
-        GeoJsonObject geometry = feature.getGeometry();
+        List<List<LatLon>> regions;
 
+        GeoJsonObject geometry = feature.getGeometry();
         if (geometry instanceof Polygon) {
-            return Stream.of(Serialization.serialize(new TimeZone(
-                    timeZoneId,
-                    convertToList(((Polygon) geometry).getExteriorRing()),
-                    ((Polygon) geometry).getInteriorRings().stream()
-                            .map(Main::convertToList)
-                            .collect(Collectors.toList()))));
+            regions = Collections.singletonList(convertToList(((Polygon) geometry).getExteriorRing()));
         } else if (geometry instanceof MultiPolygon) {
-            return ((MultiPolygon) geometry).getCoordinates().stream()
-                    .map(polygon -> Serialization.serialize(new TimeZone(timeZoneId, polygon.stream()
-                            .flatMap(Collection::stream)
-                            .map(point -> new LatLon((float) point.getLatitude(),
-                                    (float) point.getLongitude()))
-                            .collect(Collectors.toList()), Collections.emptyList())));
+            regions = ((MultiPolygon) geometry).getCoordinates().stream()
+                    .flatMap(Collection::stream)
+                    .map(Main::convertToList)
+                    .collect(Collectors.toList());
         } else {
             throw new RuntimeException("Geometries of type " + geometry.getClass() + " are not supported");
         }
+
+        return Serialization.serialize(new TimeZone(timeZoneId, regions));
     }
 
     private static void build(String argument, String outputPath) throws IOException {
@@ -79,7 +75,7 @@ public class Main {
             zipInputStream.getNextEntry();
             FeatureCollection featureCollection = new ObjectMapper().readValue(zipInputStream, FeatureCollection.class);
             Iterator<ByteBuffer> serializedTimeZones = featureCollection.getFeatures().stream()
-                    .flatMap(Main::convertFeature)
+                    .map(Main::convertFeature)
                     .iterator();
 
             writeZTar(outputPath, serializedTimeZones);

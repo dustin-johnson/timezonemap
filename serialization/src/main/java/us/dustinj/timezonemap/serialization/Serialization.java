@@ -43,32 +43,27 @@ public final class Serialization {
 
     public static ByteBuffer serialize(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         FlatBufferBuilder builder = new FlatBufferBuilder(
-                timeZone.getExteriorRegion().size() * 8 +
-                        timeZone.getInteriorRegions().size() * 8 +
+                timeZone.getRegions().stream().mapToInt(List::size).sum() * 8 +
                         timeZone.getTimeZoneId().length() * 2 + 256);
 
-        int exteriorRegionOffset = serializePolygon(builder, timeZone.getExteriorRegion());
-        // int[] interiorRegionOffsets = timeZone.getInteriorRegions().stream()
-        //         .map(interiorRegion -> serializePolygon(builder, interiorRegion))
-        //         .mapToInt(i -> i)
-        //         .toArray();
-        int interiorRegionOffset = TimeZone.createInteriorRegionsVector(builder, new int[0]);
-
-        builder.finish(TimeZone.createTimeZone(builder,
-                builder.createString(timeZone.getTimeZoneId()), exteriorRegionOffset, interiorRegionOffset));
+        int[] regionOffsets = timeZone.getRegions().stream()
+                .map(region -> serializePolygon(builder, region))
+                .mapToInt(i -> i)
+                .toArray();
+        int regionsOffset = TimeZone.createRegionsVector(builder, regionOffsets);
+        builder.finish(TimeZone.createTimeZone(builder, builder.createString(timeZone.getTimeZoneId()), regionsOffset));
 
         return builder.dataBuffer();
     }
 
     public static us.dustinj.timezonemap.serialization.TimeZone deserialize(ByteBuffer serializedTimeZone) {
         TimeZone timeZone = TimeZone.getRootAsTimeZone(serializedTimeZone);
-        List<List<LatLon>> interiorRegions = new ArrayList<>();
+        List<List<LatLon>> regions = new ArrayList<>();
 
-        for (int i = 0; i < timeZone.interiorRegionsLength(); i++) {
-            interiorRegions.add(deserializePolygon(timeZone.interiorRegions(i)));
+        for (int i = 0; i < timeZone.regionsLength(); i++) {
+            regions.add(deserializePolygon(timeZone.regions(i)));
         }
 
-        return new us.dustinj.timezonemap.serialization.TimeZone(timeZone.timeZoneName(),
-                deserializePolygon(timeZone.exteriorRegion()), interiorRegions);
+        return new us.dustinj.timezonemap.serialization.TimeZone(timeZone.timeZoneName(), regions);
     }
 }

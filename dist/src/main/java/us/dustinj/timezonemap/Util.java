@@ -26,22 +26,16 @@ import us.dustinj.timezonemap.serialization.LatLon;
 
 final class Util {
     static final SpatialReference SPATIAL_REFERENCE = SpatialReference.create(4326); // WGS84_WKID = 4326
-    private static final Logger LOG = LoggerFactory.getLogger(Util.class);
 
     // Utility class
     private Util() {}
 
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
-        List<LatLon> exteriorRegion = timeZone.getExteriorRegion();
         Polygon newPolygon = new Polygon();
 
-        newPolygon.startPath(exteriorRegion.get(0).getLongitude(), exteriorRegion.get(0).getLatitude());
-        exteriorRegion.subList(1, exteriorRegion.size())
-                .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
-
-        for (List<LatLon> interiorRegion : timeZone.getInteriorRegions()) {
-            newPolygon.startPath(interiorRegion.get(0).getLongitude(), interiorRegion.get(0).getLatitude());
-            exteriorRegion.subList(1, interiorRegion.size())
+        for (List<LatLon> region : timeZone.getRegions()) {
+            newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
+            region.subList(1, region.size())
                     .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
         }
 
@@ -83,7 +77,7 @@ final class Util {
         final Envelope2D extents;
         final TimeZone timeZone;
 
-        public ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
+        ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
             this.extents = extents;
             this.timeZone = timeZone;
         }

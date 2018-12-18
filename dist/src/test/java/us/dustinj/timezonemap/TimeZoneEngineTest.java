@@ -46,7 +46,7 @@ public class TimeZoneEngineTest {
                 new Location(39.664104, -7.535549, "Europe/Madrid", "Boarder between Spain and Portugal"),
                 new Location(39.361070, -9.407464, "Europe/Lisbon", "Almost off the coast of Portugal"),
                 new Location(39.361532, -9.440421, "Europe/Lisbon", "Off the coast of Portugal by 5km"),
-                new Location(39.315657, -9.920789, null, "~20km off the coast of Portugal"),
+                new Location(39.315657, -9.920789, "Etc/GMT+1", "~20km off the coast of Portugal"),
                 new Location(36.39823, -4.35621, "Europe/Madrid", "Off the coast of Spain by 30km"),
                 new Location(36.39258, -4.36047, "Etc/GMT", "Off the coast of Spain by 31km"),
                 new Location(51.870315, -8.408394, "Europe/Dublin", "Cork, Ireland"),
@@ -75,16 +75,12 @@ public class TimeZoneEngineTest {
                 .collect(Collectors.toList());
 
         TimeZoneEngine everywhereEngine = TimeZoneEngine.forEverywhere();
-        net.iakovlev.timeshape.TimeZoneEngine everyWhereComparison = net.iakovlev.timeshape.TimeZoneEngine.initialize();
 
         for (Location location : locations) {
             Optional<String> everywhereResult = everywhereEngine.query(location.latitude, location.longitude);
             assertThat(everywhereResult)
                     .as("Everywhere - " + location.description)
                     .isEqualTo(Optional.ofNullable(location.timeZoneId));
-            assertThat(everywhereResult)
-                    .as("Everywhere comparison - " + location.description)
-                    .isEqualTo(everyWhereComparison.query(location.latitude, location.longitude).map(Object::toString));
 
             Optional<String> scopedResult = TimeZoneEngine.forRegion(
                     location.latitude - 1,
@@ -95,16 +91,6 @@ public class TimeZoneEngineTest {
             assertThat(scopedResult)
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResult);
-        }
-    }
-
-    private static class ExportData<T> {
-        final String name;
-        final T data;
-
-        public ExportData(String name, T data) {
-            this.name = name;
-            this.data = data;
         }
     }
 
