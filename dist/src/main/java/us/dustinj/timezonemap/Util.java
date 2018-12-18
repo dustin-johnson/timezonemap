@@ -32,11 +32,18 @@ final class Util {
     private Util() {}
 
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
-        List<LatLon> region = timeZone.getRegion();
+        List<LatLon> exteriorRegion = timeZone.getExteriorRegion();
         Polygon newPolygon = new Polygon();
 
-        newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
-        region.subList(1, region.size()).forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
+        newPolygon.startPath(exteriorRegion.get(0).getLongitude(), exteriorRegion.get(0).getLatitude());
+        exteriorRegion.subList(1, exteriorRegion.size())
+                .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
+
+        for (List<LatLon> interiorRegion : timeZone.getInteriorRegions()) {
+            newPolygon.startPath(interiorRegion.get(0).getLongitude(), interiorRegion.get(0).getLatitude());
+            exteriorRegion.subList(1, interiorRegion.size())
+                    .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
+        }
 
         return new TimeZone(timeZone.getTimeZoneId(), newPolygon);
     }
@@ -117,8 +124,6 @@ final class Util {
                     return list.stream()
                             .map(g -> new TimeZone(t.timeZone.zoneId, g));
                 })
-                // TODO - Remove debug output
-                .peek(e -> LOG.info(e.zoneId))
                 .collect(Collectors.toList());
     }
 }

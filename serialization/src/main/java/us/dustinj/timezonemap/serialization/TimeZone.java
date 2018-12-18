@@ -4,20 +4,27 @@ import java.util.List;
 import java.util.Objects;
 
 public final class TimeZone {
-    final String timeZoneId;
-    final List<LatLon> region;
+    private final String timeZoneId;
+    private final List<LatLon> exteriorRegion;
+    private final List<List<LatLon>> interiorRegions;
 
-    public TimeZone(String timeZoneId, List<LatLon> region) {
+    public TimeZone(String timeZoneId, List<LatLon> exteriorRegion,
+            List<List<LatLon>> interiorRegions) {
         this.timeZoneId = timeZoneId;
-        this.region = region;
+        this.exteriorRegion = exteriorRegion;
+        this.interiorRegions = interiorRegions;
     }
 
     public String getTimeZoneId() {
         return timeZoneId;
     }
 
-    public List<LatLon> getRegion() {
-        return region;
+    public List<LatLon> getExteriorRegion() {
+        return exteriorRegion;
+    }
+
+    public List<List<LatLon>> getInteriorRegions() {
+        return interiorRegions;
     }
 
     @Override
@@ -26,11 +33,12 @@ public final class TimeZone {
         if (o == null || getClass() != o.getClass()) { return false; }
         TimeZone timeZone = (TimeZone) o;
         return Objects.equals(getTimeZoneId(), timeZone.getTimeZoneId()) &&
-                Objects.equals(getRegion(), timeZone.getRegion());
+                Objects.equals(getExteriorRegion(), timeZone.getExteriorRegion()) &&
+                Objects.equals(getInteriorRegions(), timeZone.getInteriorRegions());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getTimeZoneId(), getRegion());
+        return Objects.hash(getTimeZoneId(), getExteriorRegion(), getInteriorRegions());
     }
 }

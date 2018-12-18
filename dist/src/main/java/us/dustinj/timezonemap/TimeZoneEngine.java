@@ -3,6 +3,9 @@ package us.dustinj.timezonemap;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +29,7 @@ import us.dustinj.timezonemap.serialization.Serialization;
 public final class TimeZoneEngine {
     private static final Logger LOG = LoggerFactory.getLogger(TimeZoneEngine.class);
 
-    private final List<TimeZone> zoneIds;
+    private final List<TimeZone> timeZones;
     private final Envelope2D indexedArea;
 
     /**
@@ -89,15 +92,19 @@ public final class TimeZoneEngine {
                         .mapToLong(e -> ((Polygon) e.region).getPointCount())
                         .sum());
 
-        this.zoneIds = timeZones;
+        this.timeZones = timeZones;
         this.indexedArea = indexedArea;
     }
 
     public List<String> getKnownZoneIds() {
-        return zoneIds.stream()
+        return timeZones.stream()
                 .map(e -> e.zoneId)
                 .distinct()
                 .collect(Collectors.toList());
+    }
+
+    public List<TimeZone> getKnownTimeZones() {
+        return Collections.unmodifiableList(this.timeZones);
     }
 
     public Optional<String> query(double degreesLatitude, double degreesLongitude) {
@@ -107,7 +114,7 @@ public final class TimeZoneEngine {
             throw new IllegalArgumentException("Requested point is outside the indexed area");
         }
 
-        return this.zoneIds.parallelStream()
+        return this.timeZones.parallelStream()
                 .filter(e -> GeometryEngine.contains(e.region, point, Util.SPATIAL_REFERENCE) ||
                         GeometryEngine.touches(e.region, point, Util.SPATIAL_REFERENCE))
                 // Sort smallest first, as we want the most specific region if there is an overlap.
