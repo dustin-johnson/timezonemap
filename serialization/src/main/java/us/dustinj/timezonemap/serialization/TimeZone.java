@@ -5,9 +5,9 @@ import java.util.Objects;
 
 public final class TimeZone {
     private final String timeZoneId;
-    private final List<List<LatLon>> regions;
+    private final List<List<List<LatLon>>> regions;
 
-    public TimeZone(String timeZoneId, List<List<LatLon>> regions) {
+    public TimeZone(String timeZoneId, List<List<List<LatLon>>> regions) {
         this.timeZoneId = timeZoneId;
         this.regions = regions;
     }
@@ -16,7 +16,7 @@ public final class TimeZone {
         return this.timeZoneId;
     }
 
-    public List<List<LatLon>> getRegions() {
+    public List<List<List<LatLon>>> getRegions() {
         return this.regions;
     }
 

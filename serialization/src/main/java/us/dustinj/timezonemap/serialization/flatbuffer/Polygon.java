@@ -14,20 +14,21 @@ public final class Polygon extends Table {
   public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; }
   public Polygon __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public Point region(int j) { return region(new Point(), j); }
-  public Point region(Point obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o) + j * 8, bb) : null; }
-  public int regionLength() { int o = __offset(4); return o != 0 ? __vector_len(o) : 0; }
+  public Ring rings(int j) { return rings(new Ring(), j); }
+  public Ring rings(Ring obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__indirect(__vector(o) + j * 4), bb) : null; }
+  public int ringsLength() { int o = __offset(4); return o != 0 ? __vector_len(o) : 0; }
 
   public static int createPolygon(FlatBufferBuilder builder,
-      int regionOffset) {
+      int ringsOffset) {
     builder.startObject(1);
-    Polygon.addRegion(builder, regionOffset);
+    Polygon.addRings(builder, ringsOffset);
     return Polygon.endPolygon(builder);
   }
 
   public static void startPolygon(FlatBufferBuilder builder) { builder.startObject(1); }
-  public static void addRegion(FlatBufferBuilder builder, int regionOffset) { builder.addOffset(0, regionOffset, 0); }
-  public static void startRegionVector(FlatBufferBuilder builder, int numElems) { builder.startVector(8, numElems, 4); }
+  public static void addRings(FlatBufferBuilder builder, int ringsOffset) { builder.addOffset(0, ringsOffset, 0); }
+  public static int createRingsVector(FlatBufferBuilder builder, int[] data) { builder.startVector(4, data.length, 4); for (int i = data.length - 1; i >= 0; i--) builder.addOffset(data[i]); return builder.endVector(); }
+  public static void startRingsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(4, numElems, 4); }
   public static int endPolygon(FlatBufferBuilder builder) {
     int o = builder.endObject();
     return o;

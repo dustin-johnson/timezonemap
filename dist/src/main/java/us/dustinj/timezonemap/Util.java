@@ -2,6 +2,7 @@ package us.dustinj.timezonemap;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Spliterator;
@@ -35,7 +36,9 @@ final class Util {
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         Polygon newPolygon = new Polygon();
 
-        for (List<LatLon> region : timeZone.getRegions()) {
+        for (List<LatLon> region : timeZone.getRegions().stream()
+                .flatMap(Collection::stream)
+                .collect(Collectors.toList())) {
             newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
             region.subList(1, region.size())
                     .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));

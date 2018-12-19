@@ -53,15 +53,17 @@ public class Main {
 
     private static ByteBuffer convertFeature(Feature feature) {
         String timeZoneId = feature.getProperties().get("tzid").toString();
-        List<List<LatLon>> regions;
+        List<List<List<LatLon>>> regions;
 
         GeoJsonObject geometry = feature.getGeometry();
         if (geometry instanceof Polygon) {
-            regions = Collections.singletonList(convertToList(((Polygon) geometry).getExteriorRing()));
+            regions = Collections.singletonList(
+                    Collections.singletonList(convertToList(((Polygon) geometry).getExteriorRing())));
         } else if (geometry instanceof MultiPolygon) {
             regions = ((MultiPolygon) geometry).getCoordinates().stream()
-                    .flatMap(Collection::stream)
-                    .map(Main::convertToList)
+                    .map(polygon -> polygon.stream()
+                            .map(Main::convertToList)
+                            .collect(Collectors.toList()))
                     .collect(Collectors.toList());
         } else {
             throw new RuntimeException("Geometries of type " + geometry.getClass() + " are not supported");

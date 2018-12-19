@@ -6,7 +6,11 @@ table TimeZone {
 }
 
 table Polygon {
-    region:[Point];
+    rings:[Ring];
+}
+
+table Ring {
+    points:[Point];
 }
 
 struct Point {

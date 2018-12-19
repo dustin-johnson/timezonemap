@@ -14,8 +14,11 @@ public class SerializationTest {
     public void serializationRoundTrip() {
         TimeZone expectedTimeZone = new TimeZone("TestTimeZone",
                 IntStream.range(1, 5)
-                        .mapToObj(i -> IntStream.range(1, 500)
-                                .mapToObj(ii -> new LatLon(i * ii * 1000.0f, (float) i * ii))
+                        .mapToObj(polygon -> IntStream.range(1, 3)
+                                .mapToObj(ring -> IntStream.range(1, 500)
+                                        .mapToObj(point -> new LatLon(polygon * ring * point * 1000.0f,
+                                                (float) polygon * ring * point))
+                                        .collect(Collectors.toList()))
                                 .collect(Collectors.toList()))
                         .collect(Collectors.toList()));
         ByteBuffer serializedTimeZone = Serialization.serialize(expectedTimeZone);
