@@ -77,7 +77,7 @@ public final class TimeZoneIndex {
 
             return new TimeZoneIndex(Util.build(timeZones, indexArea), indexArea);
         } catch (NullPointerException | IOException e) {
-            LOG.error("Unable to read resource file", e);
+            LOG.error("Unable to read time zone data resource file", e);
             throw new RuntimeException(e);
         }
     }

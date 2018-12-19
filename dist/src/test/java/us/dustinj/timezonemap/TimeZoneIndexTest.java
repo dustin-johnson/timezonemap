@@ -13,11 +13,15 @@ import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import org.geojson.Feature;
+import org.geojson.FeatureCollection;
+import org.geojson.GeoJsonObject;
 import org.junit.Ignore;
 import org.junit.Test;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.GeometryException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 
@@ -94,15 +98,19 @@ public class TimeZoneIndexTest {
     // Write the indexed time zone regions to disk for diagnostic and sanity checking purposes.
     @Test
     @Ignore
-    public void outputTimezones() throws IOException {
+    public void dumpTimeZonesToFiles() throws IOException {
         Path outputPath =
                 new File(TimeZoneIndexTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
                         .toPath()                 // /target/test-classes
                         .getParent()              // /target
                         .resolve("shape_output"); // /target/shape_output
 
-        assertThat(outputPath.toFile().mkdirs()).isTrue();
+        //noinspection ResultOfMethodCallIgnored
+        outputPath.toFile().mkdirs();
 
+        // Run everything through a multimap so we can have regions with the same timeZoneId and not have file name
+        // conflicts. This might not happen, and I don't think it's supposed to, but this is a diagnostic method and
+        // it's useful to de-conflict this.
         List<TimeZone> exportTimeZones =
                 Multimaps.index(EVERYWHERE_INDEX.getKnownTimeZones(), TimeZone::getZoneId).asMap().entrySet().stream()
                         .flatMap(e -> Streams.mapWithIndex(e.getValue().stream(),
@@ -117,6 +125,25 @@ public class TimeZoneIndexTest {
                 System.err.println(e.getMessage() + " - " + timeZone.getZoneId());
             }
         }
+
+        FeatureCollection featureCollection = new FeatureCollection();
+        featureCollection.setFeatures(EVERYWHERE_INDEX.getKnownTimeZones().stream()
+                .map(TimeZone::getRegion)
+                .map(GeometryEngine::geometryToGeoJson)
+                .map(jsonString -> {
+                    try {
+                        return new ObjectMapper().readValue(jsonString, GeoJsonObject.class);
+                    } catch (IOException e) {
+                        throw new IllegalStateException(e);
+                    }
+                })
+                .map(geoJsonPolygon -> {
+                    Feature feature = new Feature();
+                    feature.setGeometry(geoJsonPolygon);
+                    return feature;
+                })
+                .collect(Collectors.toList()));
+        new ObjectMapper().writeValue(outputPath.resolve("World.json").toFile(), featureCollection);
     }
 
     @Test
