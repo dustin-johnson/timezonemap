@@ -8,6 +8,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import org.junit.Test;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.GeometryException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
 import com.google.common.collect.Multimaps;
 import com.google.common.collect.Streams;
 
@@ -31,13 +33,20 @@ public class TimeZoneIndexTest {
     private static class Location {
         final double latitude;
         final double longitude;
-        final String timeZoneId;
+        final List<String> timeZoneIds;
         final String description;
 
         Location(double latitude, double longitude, String timeZoneId, String description) {
             this.latitude = latitude;
             this.longitude = longitude;
-            this.timeZoneId = timeZoneId;
+            this.timeZoneIds = ImmutableList.of(timeZoneId);
+            this.description = description;
+        }
+
+        Location(double latitude, double longitude, String timeZoneId1, String timeZoneId2, String description) {
+            this.latitude = latitude;
+            this.longitude = longitude;
+            this.timeZoneIds = ImmutableList.of(timeZoneId1, timeZoneId2);
             this.description = description;
         }
     }
@@ -71,6 +80,10 @@ public class TimeZoneIndexTest {
                 new Location(-31.95271, 115.86046, "Australia/Perth", "Perth, Australia"),
                 new Location(-8.34059, 115.50450, "Asia/Makassar", "Mt Agung, Bali, Indonesia"),
                 new Location(21.58224, 39.16403, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
+                new Location(42.534980, 87.615030, "Asia/Urumqi", "Asia/Shanghai",
+                        "Xinjiang, China - Two time zones, Shanghai is much larger and thus should be 2nd"),
+                new Location(10.926176, 114.072017, "Asia/Ho_Chi_Minh", "Asia/Shanghai",
+                        "South China Sea - Two time zones due this being a highly disputed area"),
                 new Location(-54.80693, -68.30734, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
                 new Location(-54.93413, -67.61091, "America/Punta_Arenas", "Puerto Williams, Chile"),
                 new Location(-70.91694, 54.67198, "Antarctica/Syowa", "Antarctica"),
@@ -78,17 +91,20 @@ public class TimeZoneIndexTest {
                 .collect(Collectors.toList());
 
         for (Location location : locations) {
-            Optional<String> everywhereResult = EVERYWHERE_INDEX.query(location.latitude, location.longitude);
+            List<String> everywhereResult = EVERYWHERE_INDEX.getAllTimeZones(location.latitude, location.longitude);
             assertThat(everywhereResult)
-                    .as("Everywhere - " + location.description)
-                    .isEqualTo(Optional.ofNullable(location.timeZoneId));
+                    .as("Everywhere - All time zones - " + location.description)
+                    .isEqualTo(location.timeZoneIds);
+            assertThat(EVERYWHERE_INDEX.getTimeZone(location.latitude, location.longitude))
+                    .as("Everywhere - Single time zone - " + location.description)
+                    .isEqualTo(Optional.of(location.timeZoneIds.get(0)));
 
-            Optional<String> scopedResult = TimeZoneIndex.forRegion(
+            List<String> scopedResult = TimeZoneIndex.forRegion(
                     location.latitude - 1,
                     location.longitude - 1,
                     location.latitude + 1,
                     location.longitude + 1)
-                    .query(location.latitude, location.longitude);
+                    .getAllTimeZones(location.latitude, location.longitude);
             assertThat(scopedResult)
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResult);
@@ -162,18 +178,22 @@ public class TimeZoneIndexTest {
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scopedEngine.query(Math.nextUp(10.29621), 22.78090))
+        assertThatThrownBy(() -> scopedEngine.getTimeZone(Math.nextUp(10.29621), 22.78090))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(10.29621, Math.nextDown(22.78090)))
+        assertThatThrownBy(() -> scopedEngine.getTimeZone(10.29621, Math.nextDown(22.78090)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(Math.nextDown(3.97131), 28.10539))
+        assertThatThrownBy(() -> scopedEngine.getTimeZone(Math.nextDown(3.97131), 28.10539))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.query(3.97131, Math.nextUp(28.10539)))
+        assertThatThrownBy(() -> scopedEngine.getTimeZone(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(scopedEngine.query(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
-        assertThat(scopedEngine.query(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
+        assertThat(scopedEngine.getTimeZone(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
+        assertThat(scopedEngine.getTimeZone(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
 
-        assertThat(scopedEngine.query(10.225818, 24.293622)).contains("Africa/Khartoum");
+        // Check a few interesting places in this oddly time zoned region
+        assertThat(scopedEngine.getTimeZone(10.225818, 24.293622)).contains("Africa/Khartoum");
+        assertThat(scopedEngine.getTimeZone(10.134434, 25.520542)).contains("Africa/Juba");
+        assertThat(scopedEngine.getTimeZone(10.018797, 26.681882)).contains("Africa/Khartoum");
+        assertThat(scopedEngine.getTimeZone(5.150331, 27.348469)).contains("Africa/Bangui");
     }
 }

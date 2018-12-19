@@ -12,6 +12,8 @@ import java.util.stream.Stream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
@@ -25,6 +27,7 @@ import us.dustinj.timezonemap.serialization.LatLon;
 
 final class Util {
     static final SpatialReference SPATIAL_REFERENCE = SpatialReference.create(4326); // WGS84_WKID = 4326
+    private static final Logger LOG = LoggerFactory.getLogger(Util.class);
 
     // Utility class
     private Util() {}
@@ -66,6 +69,7 @@ final class Util {
                         return false;
                     }
                 } catch (IOException e) {
+                    LOG.error("Unable to read time zone data resource file", e);
                     throw new RuntimeException(e);
                 }
             }
@@ -94,7 +98,7 @@ final class Util {
                 })
                 // Throw out anything that doesn't at least partially overlap with the index area.
                 .filter(t -> indexArea.isIntersecting(t.extents))
-                // Sort smallest first, as we want the most specific region if there is an overlap.
+                // Sort smallest area first so we have a deterministic ordering of there is an overlap.
                 .sorted(Comparator.comparingDouble(t -> t.timeZone.getRegion().calculateArea2D()))
                 // Clip the shape to our indexArea so we don't have to keep large time zones that may only slightly
                 // intersect with the region we're indexing.

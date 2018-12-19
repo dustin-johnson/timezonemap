@@ -17,7 +17,7 @@
     <name>Distribution Package</name>
 
     <properties>
-        <jacoco.minimum.covered.ratio>0.90</jacoco.minimum.covered.ratio>
+        <jacoco.minimum.covered.ratio>0.97</jacoco.minimum.covered.ratio>
     </properties>
 
     <dependencies>

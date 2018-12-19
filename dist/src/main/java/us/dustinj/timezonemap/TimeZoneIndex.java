@@ -64,6 +64,7 @@ public final class TimeZoneIndex {
 
                                     return byteBuffer;
                                 } catch (IOException e) {
+                                    LOG.error("Unable to read time zone data resource file", e);
                                     throw new RuntimeException(e);
                                 }
                             })
@@ -105,17 +106,22 @@ public final class TimeZoneIndex {
         return Collections.unmodifiableList(this.timeZones);
     }
 
-    public Optional<String> query(double degreesLatitude, double degreesLongitude) {
+    public Optional<String> getTimeZone(double degreesLatitude, double degreesLongitude) {
+        return getAllTimeZones(degreesLatitude, degreesLongitude).stream()
+                .findFirst();
+    }
+
+    public List<String> getAllTimeZones(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
         if (!this.indexedArea.containsExclusive(point.getXY())) {
             throw new IllegalArgumentException("Requested point is outside the indexed area");
         }
 
-        return this.timeZones.parallelStream()
+        return this.timeZones.stream()
                 .filter(t -> GeometryEngine.contains(t.getRegion(), point, Util.SPATIAL_REFERENCE) ||
                         GeometryEngine.touches(t.getRegion(), point, Util.SPATIAL_REFERENCE))
                 .map(TimeZone::getZoneId)
-                .findFirst();
+                .collect(Collectors.toList());
     }
 }
