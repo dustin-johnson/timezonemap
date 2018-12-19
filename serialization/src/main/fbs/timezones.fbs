@@ -2,6 +2,10 @@ namespace us.dustinj.timezonemap.serialization.flatbuffer;
 
 table TimeZone {
     timeZoneName:string;
+    regions:[Polygon];
+}
+
+table Polygon {
     region:[Point];
 }
 

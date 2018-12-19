@@ -10,6 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -22,6 +23,7 @@ import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStr
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.geojson.GeoJsonObject;
+import org.geojson.LngLatAlt;
 import org.geojson.MultiPolygon;
 import org.geojson.Polygon;
 
@@ -43,26 +45,29 @@ public class Main {
         }
     }
 
-    private static Stream<ByteBuffer> convertFeature(Feature feature) {
+    private static List<LatLon> convertToList(List<LngLatAlt> from) {
+        return from.stream()
+                .map(point -> new LatLon((float) point.getLatitude(), (float) point.getLongitude()))
+                .collect(Collectors.toList());
+    }
+
+    private static ByteBuffer convertFeature(Feature feature) {
         String timeZoneId = feature.getProperties().get("tzid").toString();
+        List<List<LatLon>> regions;
+
         GeoJsonObject geometry = feature.getGeometry();
-
         if (geometry instanceof Polygon) {
-            List<LatLon> allPoints = ((Polygon) geometry).getExteriorRing().stream()
-                    .map(point -> new LatLon((float) point.getLatitude(), (float) point.getLongitude()))
-                    .collect(Collectors.toList());
-
-            return Stream.of(Serialization.serialize(new TimeZone(timeZoneId, allPoints)));
+            regions = Collections.singletonList(convertToList(((Polygon) geometry).getExteriorRing()));
         } else if (geometry instanceof MultiPolygon) {
-            return ((MultiPolygon) geometry).getCoordinates().stream()
-                    .map(polygon -> Serialization.serialize(new TimeZone(timeZoneId, polygon.stream()
-                            .flatMap(Collection::stream)
-                            .map(point -> new LatLon((float) point.getLatitude(),
-                                    (float) point.getLongitude()))
-                            .collect(Collectors.toList()))));
+            regions = ((MultiPolygon) geometry).getCoordinates().stream()
+                    .flatMap(Collection::stream)
+                    .map(Main::convertToList)
+                    .collect(Collectors.toList());
         } else {
             throw new RuntimeException("Geometries of type " + geometry.getClass() + " are not supported");
         }
+
+        return Serialization.serialize(new TimeZone(timeZoneId, regions));
     }
 
     private static void build(String argument, String outputPath) throws IOException {
@@ -70,7 +75,7 @@ public class Main {
             zipInputStream.getNextEntry();
             FeatureCollection featureCollection = new ObjectMapper().readValue(zipInputStream, FeatureCollection.class);
             Iterator<ByteBuffer> serializedTimeZones = featureCollection.getFeatures().stream()
-                    .flatMap(Main::convertFeature)
+                    .map(Main::convertFeature)
                     .iterator();
 
             writeZTar(outputPath, serializedTimeZones);

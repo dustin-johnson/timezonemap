@@ -5,19 +5,19 @@ import java.util.Objects;
 
 public final class TimeZone {
     private final String timeZoneId;
-    private final List<LatLon> region;
+    private final List<List<LatLon>> regions;
 
-    public TimeZone(String timeZoneId, List<LatLon> region) {
+    public TimeZone(String timeZoneId, List<List<LatLon>> regions) {
         this.timeZoneId = timeZoneId;
-        this.region = region;
+        this.regions = regions;
     }
 
     public String getTimeZoneId() {
-        return timeZoneId;
+        return this.timeZoneId;
     }
 
-    public List<LatLon> getRegion() {
-        return region;
+    public List<List<LatLon>> getRegions() {
+        return this.regions;
     }
 
     @Override
@@ -26,11 +26,11 @@ public final class TimeZone {
         if (o == null || getClass() != o.getClass()) { return false; }
         TimeZone timeZone = (TimeZone) o;
         return Objects.equals(getTimeZoneId(), timeZone.getTimeZoneId()) &&
-                Objects.equals(getRegion(), timeZone.getRegion());
+                Objects.equals(getRegions(), timeZone.getRegions());
     }
 
     @Override
     public int hashCode() {
-        return Objects.hash(getTimeZoneId(), getRegion());
+        return Objects.hash(getTimeZoneId(), getRegions());
     }
 }

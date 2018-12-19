@@ -29,11 +29,13 @@ final class Util {
     private Util() {}
 
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
-        List<LatLon> region = timeZone.getRegion();
         Polygon newPolygon = new Polygon();
 
-        newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
-        region.subList(1, region.size()).forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
+        for (List<LatLon> region : timeZone.getRegions()) {
+            newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
+            region.subList(1, region.size())
+                    .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
+        }
 
         return new TimeZone(timeZone.getTimeZoneId(), newPolygon);
     }
@@ -73,7 +75,7 @@ final class Util {
         final Envelope2D extents;
         final TimeZone timeZone;
 
-        private ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
+        ExtentsAndTimeZone(Envelope2D extents, TimeZone timeZone) {
             this.extents = extents;
             this.timeZone = timeZone;
         }

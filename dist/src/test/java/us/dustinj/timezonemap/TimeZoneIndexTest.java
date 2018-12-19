@@ -3,6 +3,11 @@ package us.dustinj.timezonemap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -25,12 +30,12 @@ public class TimeZoneIndexTest {
     private static final TimeZoneIndex EVERYWHERE_INDEX = TimeZoneIndex.forEverywhere();
 
     private static class Location {
-        final float latitude;
-        final float longitude;
+        final double latitude;
+        final double longitude;
         final String timeZoneId;
         final String description;
 
-        Location(float latitude, float longitude, String timeZoneId, String description) {
+        Location(double latitude, double longitude, String timeZoneId, String description) {
             this.latitude = latitude;
             this.longitude = longitude;
             this.timeZoneId = timeZoneId;
@@ -41,36 +46,36 @@ public class TimeZoneIndexTest {
     @Test
     public void sanityCheckKnownLocations() {
         List<Location> locations = Stream.of(
-                new Location(39.666304f, -7.558607f, "Europe/Lisbon", "Boarder between Spain and Portugal"),
-                new Location(39.664104f, -7.535549f, "Europe/Madrid", "Boarder between Spain and Portugal"),
-                new Location(39.361070f, -9.407464f, "Europe/Lisbon", "Almost off the coast of Portugal"),
-                new Location(39.361532f, -9.440421f, "Europe/Lisbon", "Off the coast of Portugal by 5km"),
-                new Location(39.315657f, -9.920789f, "Etc/GMT+1", "~20km off the coast of Portugal"),
-                new Location(36.39823f, -4.35621f, "Europe/Madrid", "Off the coast of Spain by 30km"),
-                new Location(36.39258f, -4.36047f, "Etc/GMT", "Off the coast of Spain by 31km"),
-                new Location(51.870315f, -8.408394f, "Europe/Dublin", "Cork, Ireland"),
-                new Location(35.556645f, 27.203363f, "Europe/Athens", "Tiny Greek island"),
-                new Location(55.754136f, 37.620355f, "Europe/Moscow", "Red Square, Moscow, Russia"),
-                new Location(19.430056f, -99.136297f, "America/Mexico_City", "Mexico City, Mexico"),
-                new Location(45.715940f, -121.512383f, "America/Los_Angeles", "Hood River, Oregon, US"),
-                new Location(43.563603f, -117.263646f, "America/Boise", "Weird part of Oregon that's in Mountain Time"),
-                new Location(45.684523f, -116.384093f, "America/Boise", "Idaho's north is in Pacific time, " +
+                new Location(39.666304, -7.558607, "Europe/Lisbon", "Boarder between Spain and Portugal"),
+                new Location(39.664104, -7.535549, "Europe/Madrid", "Boarder between Spain and Portugal"),
+                new Location(39.361070, -9.407464, "Europe/Lisbon", "Almost off the coast of Portugal"),
+                new Location(39.361532, -9.440421, "Europe/Lisbon", "Off the coast of Portugal by 5km"),
+                new Location(39.315657, -9.920789, "Etc/GMT+1", "~20km off the coast of Portugal"),
+                new Location(36.39823, -4.35621, "Europe/Madrid", "Off the coast of Spain by 30km"),
+                new Location(36.39258, -4.36047, "Etc/GMT", "Off the coast of Spain by 31km"),
+                new Location(51.870315, -8.408394, "Europe/Dublin", "Cork, Ireland"),
+                new Location(35.556645, 27.203363, "Europe/Athens", "Tiny Greek island"),
+                new Location(55.754136, 37.620355, "Europe/Moscow", "Red Square, Moscow, Russia"),
+                new Location(19.430056, -99.136297, "America/Mexico_City", "Mexico City, Mexico"),
+                new Location(45.715940, -121.512383f, "America/Los_Angeles", "Hood River, Oregon, US"),
+                new Location(43.563603, -117.263646f, "America/Boise", "Weird part of Oregon that's in Mountain Time"),
+                new Location(45.684523, -116.384093f, "America/Boise", "Idaho's north is in Pacific time, " +
                         "and it's south is in Mountain time. This location is barely in the south."),
-                new Location(45.637658f, -116.279734f, "America/Los_Angeles", "Idaho, barely in the north"),
-                new Location(19.59982f, -155.55946f, "Pacific/Honolulu", "Hawaii"),
-                new Location(39.10011f, -94.57814f, "America/Chicago", "Kansas City"),
-                new Location(32.77629f, -96.79687f, "America/Chicago", "Dallas, Texas"),
-                new Location(40.63969f, -73.94153f, "America/New_York", "New York, New York"),
-                new Location(-45.87392f, 170.50348f, "Pacific/Auckland", "Dunedin, New Zealand"),
-                new Location(-33.85481f, 151.21644f, "Australia/Sydney", "Sydney, Australia"),
-                new Location(-33.04723f, 135.46155f, "Australia/Adelaide", "Wudinna, Australia"),
-                new Location(-31.95271f, 115.86046f, "Australia/Perth", "Perth, Australia"),
-                new Location(-8.34059f, 115.50450f, "Asia/Makassar", "Mt Agung, Bali, Indonesia"),
-                new Location(21.58224f, 39.16403f, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
-                new Location(-54.80693f, -68.30734f, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
-                new Location(-54.93413f, -67.61091f, "America/Punta_Arenas", "Puerto Williams, Chile"),
-                new Location(-70.91694f, 54.67198f, "Antarctica/Syowa", "Antarctica"),
-                new Location(-47.91847f, 106.91770f, "Etc/GMT-7", "Ulaanbaatar, Mongolia"))
+                new Location(45.637658, -116.279734f, "America/Los_Angeles", "Idaho, barely in the north"),
+                new Location(19.59982, -155.55946, "Pacific/Honolulu", "Hawaii"),
+                new Location(39.10011, -94.57814, "America/Chicago", "Kansas City"),
+                new Location(32.77629, -96.79687, "America/Chicago", "Dallas, Texas"),
+                new Location(40.63969, -73.94153, "America/New_York", "New York, New York"),
+                new Location(-45.87392, 170.50348, "Pacific/Auckland", "Dunedin, New Zealand"),
+                new Location(-33.85481, 151.21644, "Australia/Sydney", "Sydney, Australia"),
+                new Location(-33.04723, 135.46155, "Australia/Adelaide", "Wudinna, Australia"),
+                new Location(-31.95271, 115.86046, "Australia/Perth", "Perth, Australia"),
+                new Location(-8.34059, 115.50450, "Asia/Makassar", "Mt Agung, Bali, Indonesia"),
+                new Location(21.58224, 39.16403, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
+                new Location(-54.80693, -68.30734, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
+                new Location(-54.93413, -67.61091, "America/Punta_Arenas", "Puerto Williams, Chile"),
+                new Location(-70.91694, 54.67198, "Antarctica/Syowa", "Antarctica"),
+                new Location(-47.91847, 106.91770, "Etc/GMT-7", "Ulaanbaatar, Mongolia"))
                 .collect(Collectors.toList());
 
         for (Location location : locations) {
@@ -91,6 +96,7 @@ public class TimeZoneIndexTest {
         }
     }
 
+    // Write the indexed time zone regions to disk for diagnostic and sanity checking purposes.
     @Test
     @Ignore
     public void outputTimezones() throws IOException {
@@ -120,7 +126,7 @@ public class TimeZoneIndexTest {
 
     @Test
     public void testKnownZones() {
-        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(1_300);
+        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(400);
     }
 
     @Test
