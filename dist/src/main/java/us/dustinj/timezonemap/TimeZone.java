@@ -2,7 +2,6 @@ package us.dustinj.timezonemap;
 
 import java.util.Objects;
 
-import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.Polygon;
 
 final class TimeZone {
@@ -14,11 +13,11 @@ final class TimeZone {
         this.region = region;
     }
 
-    public String getZoneId() {
+    String getZoneId() {
         return zoneId;
     }
 
-    public Polygon getRegion() {
+    Polygon getRegion() {
         return region;
     }
 

@@ -9,12 +9,10 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -85,7 +83,10 @@ public class Main {
     }
 
     private static void writeZTar(String outputPath, Iterator<ByteBuffer> serializedTimeZones) throws IOException {
+
+        //noinspection ResultOfMethodCallIgnored
         new File(outputPath).getParentFile().mkdirs();
+
         try (TarArchiveOutputStream out =
                 new TarArchiveOutputStream(new ZstdCompressorOutputStream(new FileOutputStream(outputPath), 25))) {
             int count = 0;
