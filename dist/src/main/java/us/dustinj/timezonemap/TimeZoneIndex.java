@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -24,6 +23,7 @@ import com.esri.core.geometry.Polygon;
 import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Serialization;
 
+@SuppressWarnings("WeakerAccess")
 public final class TimeZoneIndex {
     private static final Logger LOG = LoggerFactory.getLogger(TimeZoneIndex.class);
 
@@ -115,11 +115,6 @@ public final class TimeZoneIndex {
         return this.timeZones.parallelStream()
                 .filter(t -> GeometryEngine.contains(t.getRegion(), point, Util.SPATIAL_REFERENCE) ||
                         GeometryEngine.touches(t.getRegion(), point, Util.SPATIAL_REFERENCE))
-                // Sort smallest first, as we want the most specific region if there is an overlap.
-                // Note, since we clipped the geometries to the index area when we indexed them, we likely introduced
-                // a bug where large regions could look small as they only slightly overlap. I think the only way to
-                // solve this is to remove the clipping. Since this is an unlikely defect, I'm ignoring it for now.
-                .sorted(Comparator.comparingDouble(t -> t.getRegion().calculateArea2D()))
                 .map(TimeZone::getZoneId)
                 .findFirst();
     }

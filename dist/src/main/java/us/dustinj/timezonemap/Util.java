@@ -2,6 +2,7 @@ package us.dustinj.timezonemap;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -93,6 +94,8 @@ final class Util {
                 })
                 // Throw out anything that doesn't at least partially overlap with the index area.
                 .filter(t -> indexArea.isIntersecting(t.extents))
+                // Sort smallest first, as we want the most specific region if there is an overlap.
+                .sorted(Comparator.comparingDouble(t -> t.timeZone.getRegion().calculateArea2D()))
                 // Clip the shape to our indexArea so we don't have to keep large time zones that may only slightly
                 // intersect with the region we're indexing.
                 .flatMap(t -> {
