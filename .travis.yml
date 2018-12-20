@@ -19,5 +19,4 @@ env:
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
-  - ./deployment/before-deploy.sh
   - ./deployment/deploy.sh
