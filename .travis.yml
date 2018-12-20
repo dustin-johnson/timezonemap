@@ -5,11 +5,11 @@ cache:
     - $HOME/.m2
 
 script:
-    - mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
-    - mvn test -DskipDataPackaging=true -B
+  - mvn test -DskipDataPackaging=true -B
 
 env:
   global:
+    - # After lots of trial and error, I discovered that the encryption ought to be performed as -> travis encrypt "OSSRH_JIRA_USERNAME='username with spaces and @ symbols'"
     - secure: "MOxqG53U2sxU0M8KYNOB6ssRBvyjSnOOGREJJCegVDoEK/2lnmT7OpN1N7G50gRE8OCsglN93pC3vKyQPlv4PELzML1YBAxyrARvBenqBTDylcYl/qs7F+jEhRPvxXV31qJN+99ZjGt5L1ze5yn4OX0f3GP6VVjPYzG7xbUws5gVfhBVaXiB2PRyoVAyuMflBxZiBKZlW99dhnD6B5zjpviXfFMe036PobtO/LZxg9EtOdJyNvoRgRrZY3KsG2uJ4ixAbFsAOwHvobqdCb3x1VZc1SeHsMtObey5Xt+U7IvF4ZNGujrDGPcaQDtn0GZIQLvjN9E0uGjUiVHEI4GioGatShmkD2782FnH7R7YJJg2qx1Dwz3jmmrVBQvEosqURQFAAHNKGguPdZc/Nzcd0Ophkvq8AGwh1kE+P+sCAFcwzebWGO0jaka0D4fxWeTz6HuvrDECuVrsjjaaBSwve4nmqezTEGo4rzJGmsRAPVVvDWmxvO2XCyNAkI/bJCAwlOLYmgjd6w82uwMlWspDNTWAJCaTihOUhdTpVc+GSIFXe3DMM8gvnKfB4owf3ezTiJF9EKIcnVyYuuYRfbBhdOy5vrKfKflkmiz1K/bAmF+z/2ure57UhaCG+6l26ihQWUCOgxZoOix1OBckpPsuUoLJmNxI2HxM+Jr8UqAiClQ="
     - # ^^ OSSRH_JIRA_USERNAME
     - secure: "ahWsLz3H+YAxadhdhJ8G0Vw7PZIIuPCxoQkF+SrxG08KXNIoRJrXBh+ALuhRImYAU+HP/qRZLbrAXOEnQPt+1B5ehtLLCce+Ea3kGbNF2h9pIbT6CWB/Eh/zJwOXL156ylBzmlIrzmSe6oRiXGeuHeD3OTuoFlG69nfu0+MTjUjVgyo500XdCAa8JdouR5sUpKJJMg/COcGfSzfLi6Ot+VMgjVNRdx1jJCF0SmgBXY0ckfROV2yMHrGS7zBFUdaln75/egmaX31p4ksDFLIkIHyh74xk2hYInAZ3FichPqD+r++ghrC/5Xsf+VaA3Jvsso/CKpXn1qTqwVdqC7tLyxJzE26DxkAQlyFx5uYb2jA+xO5wO353Oh7hIgxFcAqlpGcOl68hA3GY1STHTHaY1J2ZBDpnXvgQHydbgJh7x6Uyl0gBaiGaD7RdgoxqXUhog+L/ZR7k/i66o3swBMjZVUFMEILUaVMMlVjTPtlUryjXovo370Ocs/yDTaFpokCyI0IHZC8aeu3DNWwX3dMH2Ll3I6DmD220novMIDFhkS+KYXBFQY16qJQziYGG3odufOsbaYErKizMOLoc9rx0OXFACS8XVXSTy0PUVlIpv10hGZC6hXOYKn2xHuAEao5HmDbH0TS6kXQ5yj4C3EGjzG6RDSFhkrx5GsREtaOB2bA="
@@ -18,7 +18,6 @@ env:
     - # ^^ GPG_KEY_NAME
     - secure: "h+z9MFUXZSuM1j96fqr1m/mSxKE0WnzNpbZXcOG70EQQX3DcDsZ8G/7baVwb4Zy7AtPHVmGoUt5ms7iw1qWC/F4eL/qs1V6vEWlrRxMUgK/LOzCE5wlthYtTxeyObD5+MDBA6acj0ey/RcdNpAT1VcIX60ivQu1K6WMYYyUdIyh0IJ8m0eGPDp9tMYOaFxBBSnDMh7Tq0qMpsulvUEvbLOvQr4v4+qturO9Sc+ytiLZXYWuarJB/ou7hK/ex8ZuwrVNHFd2m6DLQhrGXN0LM+hZVKgHsHr+bHmw6a/U7PgQk2ZPd+HC6tAakdBxOT6ZzM1dm6Rght+XZIkezXJTLR7QNHvYoOtoMByFgd0x7NRAk5OXLngggaOAc45Tz5iUnpxPOHoxHTLwI2mcDUa2yBk6xZDEqqTQfaIIKJES6dy1NTJfO+15p4rgqFkLZD0AK9AWwDTBu6YiWOb5vqlVfsG6fSna6y/AGZ+VdqohstfcfV10Evo+9BQH1vtfzXRdeiZqK6aSYersZFW+8zsvII0KPsLEYRXEE8xxQg1zPcyD2k2TP24zkuPphVFSiNt8qMat+C2tXykPuaUhr0Pct9lW1OiTrXnNTFMjygvJER9v85UIJYlRkVfxrLqTKk5xDGpBPcOXnVX6CUGdrk7HG6bxjALeRHLnytatKA7/+zAQ="
     - # ^^ GPG_PASSPHRASE
-    - secure: "YJytBQhJPB/NpQ9sg+26om6ueLtcDNKGhLL0Z0KR74WSFAYq/3MtKEEFlHN9RSouDlNwzh1l9bqI3vHg7g8zbzvV49FDAe+CTPssOIPWziJfELO2s+VZDqNP8K4d6huHL3C65KgFi8Puk19f3ZH3Rii4X4V/gJbYqnmGnIVPyJCfWIruL+e3Lu6Vi0k+kZNjcqT+YAI/UVix5fWWBiM9XCzLS094SJxdpnu6xeg8Zm9IVc6DWMWOb3yrasi8r4FJ3qp6WshX9tNknDvnRjpX0u2R68S14YZufXMT1VlNBVLrVUCYiSINrt/jRduS5yX4YrhiVnhqz+9sp4uLARdr93kNjDF1io40qY0vgU60iB4LNCCyXKWSL3YKP6MMyUsaxBbCQwDmzCiD/aVuX+L15rdFVYc8j/46PnCsnUzwcaw0RrJkTLoTCKG/6Gv39wjHQp0iduPAFD65i9ECZaZSukQ4TVwv0A04r0cVEE5K9DMV6dM4nuws1R6nbtisgDWrH2X3A8SD2MnpwayOFwAtaBUSnqnmz14nxtS0Jao3ICTGxGdA840FL0LGtNDiUyKjflHB4cLQv3rMoqjq0H0MZDwp3gkh2ITWks6eOmpkRGXDxrVOfAUPlTxzvnO9/stfBw+D36I7DefWca3VD2nh6+xt6DtrBg7FsRaoEd4rDYw="
 
 after_success:
   - bash <(curl -s https://codecov.io/bash)
