@@ -4,6 +4,10 @@ cache:
   directories:
     - $HOME/.m2
 
+script:
+    mvn install -DskipTests=true -Dmaven.javadoc.skip=true -B -V
+    mvn test -DskipDataPackaging=true -B
+
 env:
   global:
     - secure: "MOxqG53U2sxU0M8KYNOB6ssRBvyjSnOOGREJJCegVDoEK/2lnmT7OpN1N7G50gRE8OCsglN93pC3vKyQPlv4PELzML1YBAxyrARvBenqBTDylcYl/qs7F+jEhRPvxXV31qJN+99ZjGt5L1ze5yn4OX0f3GP6VVjPYzG7xbUws5gVfhBVaXiB2PRyoVAyuMflBxZiBKZlW99dhnD6B5zjpviXfFMe036PobtO/LZxg9EtOdJyNvoRgRrZY3KsG2uJ4ixAbFsAOwHvobqdCb3x1VZc1SeHsMtObey5Xt+U7IvF4ZNGujrDGPcaQDtn0GZIQLvjN9E0uGjUiVHEI4GioGatShmkD2782FnH7R7YJJg2qx1Dwz3jmmrVBQvEosqURQFAAHNKGguPdZc/Nzcd0Ophkvq8AGwh1kE+P+sCAFcwzebWGO0jaka0D4fxWeTz6HuvrDECuVrsjjaaBSwve4nmqezTEGo4rzJGmsRAPVVvDWmxvO2XCyNAkI/bJCAwlOLYmgjd6w82uwMlWspDNTWAJCaTihOUhdTpVc+GSIFXe3DMM8gvnKfB4owf3ezTiJF9EKIcnVyYuuYRfbBhdOy5vrKfKflkmiz1K/bAmF+z/2ure57UhaCG+6l26ihQWUCOgxZoOix1OBckpPsuUoLJmNxI2HxM+Jr8UqAiClQ="

@@ -58,6 +58,7 @@
                         <argument>2018g</argument>
                         <argument>${project.build.directory}/classes/timezonemap.tar.zstd</argument>
                     </arguments>
+                    <skip>${skipDataPackaging}</skip>
                 </configuration>
             </plugin>
         </plugins>
