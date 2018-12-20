@@ -25,6 +25,7 @@ import com.esri.core.geometry.GeometryException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
+@Ignore
 public class TimeZoneIndexTest {
     private static final TimeZoneIndex EVERYWHERE_INDEX = TimeZoneIndex.forEverywhere();
 
