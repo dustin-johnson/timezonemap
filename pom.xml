@@ -7,7 +7,7 @@
     <groupId>us.dustinj.timezonemap</groupId>
     <artifactId>timezonemap-parent</artifactId>
     <packaging>pom</packaging>
-    <version>1.0-SNAPSHOT</version>
+    <version>1.0</version>
 
     <name>Time Zone Map Parent</name>
     <description>A library for getting time zone information from location data.</description>
@@ -40,7 +40,7 @@
     </developers>
 
     <properties>
-        <version>1.0-SNAPSHOT</version>
+        <version>1.0</version>
 
         <!-- By default, the code coverage minimum is 100% so new modules will fail until configured -->
         <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
