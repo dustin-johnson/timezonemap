@@ -5,11 +5,11 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>us.dustinj.timezonemap</groupId>
-    <artifactId>timezonemap</artifactId>
+    <artifactId>timezonemap-parent</artifactId>
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
 
-    <name>Time Zone Map</name>
+    <name>Time Zone Map Parent</name>
     <description>A library for getting time zone information from location data.</description>
     <url>https://github.com/dustin-johnson/timezonemap</url>
     <licenses>

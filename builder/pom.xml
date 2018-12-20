@@ -6,12 +6,12 @@
 
     <parent>
         <groupId>us.dustinj.timezonemap</groupId>
-        <artifactId>timezonemap</artifactId>
+        <artifactId>timezonemap-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>builder</artifactId>
+    <artifactId>timezonemap-builder</artifactId>
     <packaging>jar</packaging>
 
     <name>Builder Utility</name>
@@ -58,7 +58,7 @@
     <dependencies>
         <dependency>
             <groupId>us.dustinj.timezonemap</groupId>
-            <artifactId>serialization</artifactId>
+            <artifactId>timezonemap-serialization</artifactId>
             <version>${version}</version>
         </dependency>
         <dependency>

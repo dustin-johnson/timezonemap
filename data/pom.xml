@@ -6,15 +6,15 @@
 
     <parent>
         <groupId>us.dustinj.timezonemap</groupId>
-        <artifactId>timezonemap</artifactId>
+        <artifactId>timezonemap-parent</artifactId>
         <version>1.0-SNAPSHOT</version>
         <relativePath>../pom.xml</relativePath>
     </parent>
 
-    <artifactId>data</artifactId>
+    <artifactId>timezonemap-data</artifactId>
     <packaging>jar</packaging>
 
-    <name>Data</name>
+    <name>Time Zone Map Data</name>
 
     <properties>
         <jacoco.minimum.covered.ratio>0.30</jacoco.minimum.covered.ratio>
@@ -54,7 +54,7 @@
                     <workingDirectory>${project.basedir}/../builder/target</workingDirectory>
                     <arguments>
                         <argument>-jar</argument>
-                        <argument>builder-${project.version}.jar</argument>
+                        <argument>timezonemap-builder-${project.version}.jar</argument>
                         <argument>2018g</argument>
                         <argument>${project.build.directory}/classes/timezonemap.tar.zstd</argument>
                     </arguments>
@@ -67,15 +67,11 @@
     <dependencies>
         <dependency>
             <groupId>us.dustinj.timezonemap</groupId>
-            <artifactId>builder</artifactId>
+            <artifactId>timezonemap-builder</artifactId>
             <version>${version}</version>
-            <scope>compile</scope>
+            <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>de.grundid.opendatalab</groupId>
-            <artifactId>geojson-jackson</artifactId>
-            <version>1.8.1</version>
-        </dependency>
+
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-compress</artifactId>
