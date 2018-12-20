@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -20,12 +19,11 @@ import org.geojson.GeoJsonObject;
 import org.junit.Ignore;
 import org.junit.Test;
 
+import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.GeometryException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
-import com.google.common.collect.Multimaps;
-import com.google.common.collect.Streams;
 
 public class TimeZoneIndexTest {
     private static final TimeZoneIndex EVERYWHERE_INDEX = TimeZoneIndex.forEverywhere();
@@ -111,6 +109,25 @@ public class TimeZoneIndexTest {
         }
     }
 
+    @Test
+    public void forRegion() {
+        // Equal latitudes
+        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 1.0, 4.0))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        // Max latitude < min latitude
+        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 0.0, 4.0))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        // Equal longitude
+        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 3.0, 2.0))
+                .isInstanceOf(IllegalArgumentException.class);
+
+        // Max longitude < min longitude
+        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 3.0, 0.0))
+                .isInstanceOf(IllegalArgumentException.class);
+    }
+
     // Write the indexed time zone regions to disk for diagnostic and sanity checking purposes.
     @Test
     @Ignore
@@ -124,24 +141,16 @@ public class TimeZoneIndexTest {
         //noinspection ResultOfMethodCallIgnored
         outputPath.toFile().mkdirs();
 
-        // Run everything through a multimap so we can have regions with the same timeZoneId and not have file name
-        // conflicts. This might not happen, and I don't think it's supposed to, but this is a diagnostic method and
-        // it's useful to de-conflict this.
-        List<TimeZone> exportTimeZones =
-                Multimaps.index(EVERYWHERE_INDEX.getKnownTimeZones(), TimeZone::getZoneId).asMap().entrySet().stream()
-                        .flatMap(e -> Streams.mapWithIndex(e.getValue().stream(),
-                                (t, i) -> new TimeZone(t.getZoneId().replace("/", "_") + "_" + i, t.getRegion())))
-                        .collect(Collectors.toList());
-
-        for (TimeZone timeZone : exportTimeZones) {
+        for (TimeZone timeZone : EVERYWHERE_INDEX.getKnownTimeZones()) {
             try {
-                Files.write(outputPath.resolve(timeZone.getZoneId() + ".json"),
+                Files.write(outputPath.resolve(timeZone.getZoneId().replace("/", "_") + ".json"),
                         GeometryEngine.geometryToGeoJson(timeZone.getRegion()).getBytes(StandardCharsets.UTF_8));
             } catch (GeometryException e) {
                 System.err.println(e.getMessage() + " - " + timeZone.getZoneId());
             }
         }
 
+        // Build a world.json
         FeatureCollection featureCollection = new FeatureCollection();
         featureCollection.setFeatures(EVERYWHERE_INDEX.getKnownTimeZones().stream()
                 .map(TimeZone::getRegion)
@@ -163,17 +172,34 @@ public class TimeZoneIndexTest {
     }
 
     @Test
-    public void testKnownZones() {
-        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(400);
-    }
-
-    @Test
-    public void testKnownZoneIds() {
+    public void testKnownZonesAndIds() {
         assertThat(EVERYWHERE_INDEX.getKnownZoneIds().size()).isGreaterThan(400);
+        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(400);
+
+        // Small stripe horizontally across the USA
+        Envelope2D envelope = new Envelope2D(-123.283836, 40.169102, -77.030765, 40.169103);
+        TimeZoneIndex scopedEngine =
+                TimeZoneIndex.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
+
+        // Accurate results, sorted by land area (smallest first)
+        assertThat(scopedEngine.getKnownZoneIds()).contains("America/Indiana/Indianapolis", "America/Los_Angeles",
+                "America/New_York", "America/Denver", "America/Chicago");
+        assertThat(scopedEngine.getKnownTimeZones().stream().map(TimeZone::getZoneId))
+                .containsExactlyElementsOf(scopedEngine.getKnownZoneIds());
+
+        envelope.inflate(1E-10, 1E-10); // Inflate the envelope just slightly to avoid precision errors.
+        scopedEngine.getKnownTimeZones().forEach(t -> {
+            Envelope2D regionExtents = new Envelope2D();
+            t.getRegion().queryEnvelope2D(regionExtents);
+
+            assertThat(envelope.contains(regionExtents))
+                    .as("Time zone " + t.getZoneId() + " is clipped to the indexed region")
+                    .isTrue();
+        });
     }
 
     @Test
-    public void scopedRegionTest() {
+    public void scopedRegionTest_Africa_Rectangular() {
         TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
                 3.97131, 22.78090,
                 10.29621, 28.10539);
@@ -195,5 +221,26 @@ public class TimeZoneIndexTest {
         assertThat(scopedEngine.getTimeZone(10.134434, 25.520542)).contains("Africa/Juba");
         assertThat(scopedEngine.getTimeZone(10.018797, 26.681882)).contains("Africa/Khartoum");
         assertThat(scopedEngine.getTimeZone(5.150331, 27.348469)).contains("Africa/Bangui");
+    }
+
+    @Test
+    public void scopedRegionTest_USA_Line() {
+        // Small stripe horizontally across the USA
+        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
+                40.169102, -123.283836,
+                40.169103, -77.030765);
+
+        assertThat(scopedEngine.getTimeZone(40.169102, -123.283836)).contains("America/Los_Angeles");
+        assertThat(scopedEngine.getTimeZone(40.169102, -106.843598)).contains("America/Denver");
+        assertThat(scopedEngine.getTimeZone(40.169102, -93.821612)).contains("America/Chicago");
+        assertThat(scopedEngine.getTimeZone(40.169102, -86.164327)).contains("America/Indiana/Indianapolis");
+        assertThat(scopedEngine.getTimeZone(40.169102, -77.030765)).contains("America/New_York");
+    }
+
+    @Test
+    public void envelopeToPolygon() {
+        Envelope2D envelope = new Envelope2D(1.0, 2.0, 3.0, 4.0);
+
+        assertThat(TimeZoneIndex.envelopeToPolygon(envelope).calculateArea2D()).isEqualTo(envelope.getArea());
     }
 }
