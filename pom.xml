@@ -20,6 +20,11 @@
         </license>
     </licenses>
 
+    <ciManagement>
+        <system>Travis CI</system>
+        <url>https://travis-ci.com/dustin-johnson/timezonemap</url>
+    </ciManagement>
+
     <scm>
         <url>https://github.com/dustin-johnson/timezonemap</url>
         <connection>scm:git:git://github.com/dustin-johnson/timezonemap.git</connection>
