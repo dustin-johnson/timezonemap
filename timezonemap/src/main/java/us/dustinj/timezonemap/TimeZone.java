@@ -4,7 +4,8 @@ import java.util.Objects;
 
 import com.esri.core.geometry.Polygon;
 
-final class TimeZone {
+@SuppressWarnings("WeakerAccess")
+public final class TimeZone {
     private final String zoneId;
     private final Polygon region;
 
@@ -13,11 +14,11 @@ final class TimeZone {
         this.region = region;
     }
 
-    String getZoneId() {
+    public String getZoneId() {
         return zoneId;
     }
 
-    Polygon getRegion() {
+    public Polygon getRegion() {
         return region;
     }
 

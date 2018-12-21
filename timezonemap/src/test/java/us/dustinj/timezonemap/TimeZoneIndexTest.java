@@ -89,11 +89,11 @@ public class TimeZoneIndexTest {
                 .collect(Collectors.toList());
 
         for (Location location : locations) {
-            List<String> everywhereResult = EVERYWHERE_INDEX.getAllTimeZones(location.latitude, location.longitude);
+            List<String> everywhereResult = EVERYWHERE_INDEX.getAllTimeZoneIds(location.latitude, location.longitude);
             assertThat(everywhereResult)
                     .as("Everywhere - All time zones - " + location.description)
                     .isEqualTo(location.timeZoneIds);
-            assertThat(EVERYWHERE_INDEX.getTimeZone(location.latitude, location.longitude))
+            assertThat(EVERYWHERE_INDEX.getTimeZoneId(location.latitude, location.longitude))
                     .as("Everywhere - Single time zone - " + location.description)
                     .isEqualTo(Optional.of(location.timeZoneIds.get(0)));
 
@@ -102,7 +102,7 @@ public class TimeZoneIndexTest {
                     location.longitude - 1,
                     location.latitude + 1,
                     location.longitude + 1)
-                    .getAllTimeZones(location.latitude, location.longitude);
+                    .getAllTimeZoneIds(location.latitude, location.longitude);
             assertThat(scopedResult)
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResult);
@@ -138,8 +138,7 @@ public class TimeZoneIndexTest {
                         .getParent()              // /target
                         .resolve("shape_output"); // /target/shape_output
 
-        //noinspection ResultOfMethodCallIgnored
-        outputPath.toFile().mkdirs();
+        Files.createDirectories(outputPath);
 
         for (TimeZone timeZone : EVERYWHERE_INDEX.getKnownTimeZones()) {
             try {
@@ -204,23 +203,23 @@ public class TimeZoneIndexTest {
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scopedEngine.getTimeZone(Math.nextUp(10.29621), 22.78090))
+        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(Math.nextUp(10.29621), 22.78090))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZone(10.29621, Math.nextDown(22.78090)))
+        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(10.29621, Math.nextDown(22.78090)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZone(Math.nextDown(3.97131), 28.10539))
+        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(Math.nextDown(3.97131), 28.10539))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZone(3.97131, Math.nextUp(28.10539)))
+        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(scopedEngine.getTimeZone(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
-        assertThat(scopedEngine.getTimeZone(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
+        assertThat(scopedEngine.getTimeZoneId(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
+        assertThat(scopedEngine.getTimeZoneId(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
 
         // Check a few interesting places in this oddly time zoned region
-        assertThat(scopedEngine.getTimeZone(10.225818, 24.293622)).contains("Africa/Khartoum");
-        assertThat(scopedEngine.getTimeZone(10.134434, 25.520542)).contains("Africa/Juba");
-        assertThat(scopedEngine.getTimeZone(10.018797, 26.681882)).contains("Africa/Khartoum");
-        assertThat(scopedEngine.getTimeZone(5.150331, 27.348469)).contains("Africa/Bangui");
+        assertThat(scopedEngine.getTimeZoneId(10.225818, 24.293622)).contains("Africa/Khartoum");
+        assertThat(scopedEngine.getTimeZoneId(10.134434, 25.520542)).contains("Africa/Juba");
+        assertThat(scopedEngine.getTimeZoneId(10.018797, 26.681882)).contains("Africa/Khartoum");
+        assertThat(scopedEngine.getTimeZoneId(5.150331, 27.348469)).contains("Africa/Bangui");
     }
 
     @Test
@@ -230,11 +229,11 @@ public class TimeZoneIndexTest {
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
-        assertThat(scopedEngine.getTimeZone(40.169102, -123.283836)).contains("America/Los_Angeles");
-        assertThat(scopedEngine.getTimeZone(40.169102, -106.843598)).contains("America/Denver");
-        assertThat(scopedEngine.getTimeZone(40.169102, -93.821612)).contains("America/Chicago");
-        assertThat(scopedEngine.getTimeZone(40.169102, -86.164327)).contains("America/Indiana/Indianapolis");
-        assertThat(scopedEngine.getTimeZone(40.169102, -77.030765)).contains("America/New_York");
+        assertThat(scopedEngine.getTimeZoneId(40.169102, -123.283836)).contains("America/Los_Angeles");
+        assertThat(scopedEngine.getTimeZoneId(40.169102, -106.843598)).contains("America/Denver");
+        assertThat(scopedEngine.getTimeZoneId(40.169102, -93.821612)).contains("America/Chicago");
+        assertThat(scopedEngine.getTimeZoneId(40.169102, -86.164327)).contains("America/Indiana/Indianapolis");
+        assertThat(scopedEngine.getTimeZoneId(40.169102, -77.030765)).contains("America/New_York");
     }
 
     @Test

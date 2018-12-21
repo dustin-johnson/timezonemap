@@ -19,8 +19,6 @@ import java.util.stream.StreamSupport;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
@@ -39,19 +37,11 @@ import us.dustinj.timezonemap.serialization.Serialization;
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneIndex {
     static final SpatialReference SPATIAL_REFERENCE = SpatialReference.create(4326); // WGS84_WKID = 4326
-    private static final Logger LOG = LoggerFactory.getLogger(TimeZoneIndex.class);
 
     private final List<TimeZone> timeZones;
     private final Envelope2D indexedArea;
 
     private TimeZoneIndex(List<TimeZone> timeZones, Envelope2D indexedArea) {
-        LOG.info("Initialized index with {} time zones described with {} points",
-                timeZones.size(),
-                timeZones.stream()
-                        .map(TimeZone::getRegion)
-                        .mapToLong(Polygon::getPointCount)
-                        .sum());
-
         this.timeZones = timeZones;
         this.indexedArea = indexedArea;
     }
@@ -118,8 +108,7 @@ public final class TimeZoneIndex {
 
                                     return byteBuffer;
                                 } catch (IOException e) {
-                                    LOG.error("Unable to read time zone data resource file", e);
-                                    throw new RuntimeException(e);
+                                    throw new IllegalStateException("Unable to load time zone file " + n.getName(), e);
                                 }
                             })
                             .map(Serialization::deserialize)
@@ -131,21 +120,20 @@ public final class TimeZoneIndex {
                     Math.nextUp(maxDegreesLatitude));
 
             return new TimeZoneIndex(build(timeZones, indexArea), indexArea);
-        } catch (NullPointerException | IOException e) {
-            LOG.error("Unable to read time zone data resource file", e);
-            throw new RuntimeException(e);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to read time zone data resource file", e);
         }
     }
 
     /**
-     * An list of all time zone identifiers contained in this index. The list is sorted by the area the time zone
+     * A list of all time zone identifiers contained in this index. The list is sorted by the area the time zone
      * covers, smallest first. Note, the area computation used for sorting considers the real-world area the time
      * zone covers regardless of the region the index was initialized for. If this index was initialized using {@link
      * #forRegion(double, double, double, double)}, then the returned list represents all time zones that overlap with
      * the coordinates with which this index was initialized.
      * <p>
-     * This list represents the full range of identifiers that can be returned by {@link #getTimeZone(double, double)}
-     * or {@link #getAllTimeZones(double, double)}.
+     * This list represents the full range of identifiers that can be returned by {@link #getTimeZoneId(double, double)}
+     * or {@link #getAllTimeZoneIds(double, double)}.
      *
      * @return A sorted list of known time zone identifiers contained in this index.
      */
@@ -157,15 +145,15 @@ public final class TimeZoneIndex {
     }
 
     /**
-     * An list of all time zone identifiers, and their regions, contained in this index. The list is sorted by the area
+     * A list of all time zone identifiers, and their regions, contained in this index. The list is sorted by the area
      * the time zone covers, smallest first. Note, the area computation used for sorting considers the real-world area
      * the time zone covers regardless of the region the index was initialized for. If this index was initialized using
      * {@link #forRegion(double, double, double, double)}, then the returned list represents all time zones that
      * overlap with the coordinates with which this index was initialized and the regions are clipped to the
      * initialization coordinates.
      * <p>
-     * This list represents the full range of time zones that can be returned by {@link #getTimeZone(double, double)}
-     * or {@link #getAllTimeZones(double, double)}.
+     * This list represents the full range of time zones that can be returned by {@link #getTimeZoneId(double, double)}
+     * or {@link #getAllTimeZoneIds(double, double)}.
      *
      * @return A sort list of known time zones contained in this index.
      */
@@ -188,7 +176,7 @@ public final class TimeZoneIndex {
      * @throws IllegalArgumentException
      *         If the provided coordinates are outside of the area index by this instance of the time zone index.
      */
-    public Optional<String> getTimeZone(double degreesLatitude, double degreesLongitude) {
+    public Optional<String> getTimeZoneId(double degreesLatitude, double degreesLongitude) {
         return getOverlappingTimeZones(degreesLatitude, degreesLongitude)
                 .map(TimeZone::getZoneId)
                 .findFirst();
@@ -213,7 +201,7 @@ public final class TimeZoneIndex {
      * @throws IllegalArgumentException
      *         If the provided coordinates are outside of the area index by this instance of the time zone index.
      */
-    public List<String> getAllTimeZones(double degreesLatitude, double degreesLongitude) {
+    public List<String> getAllTimeZoneIds(double degreesLatitude, double degreesLongitude) {
         return getOverlappingTimeZones(degreesLatitude, degreesLongitude)
                 .map(TimeZone::getZoneId)
                 .collect(Collectors.toList());
@@ -268,8 +256,7 @@ public final class TimeZoneIndex {
                         return false;
                     }
                 } catch (IOException e) {
-                    LOG.error("Unable to read time zone data resource file", e);
-                    throw new RuntimeException(e);
+                    throw new IllegalStateException("Unable to read time zone data resource file", e);
                 }
             }
         };

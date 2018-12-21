@@ -83,9 +83,7 @@ public class Main {
     }
 
     private static void writeZTar(String outputPath, Iterator<ByteBuffer> serializedTimeZones) throws IOException {
-
-        //noinspection ResultOfMethodCallIgnored
-        new File(outputPath).getParentFile().mkdirs();
+        Files.createDirectories(Paths.get(outputPath).getParent());
 
         try (TarArchiveOutputStream out =
                 new TarArchiveOutputStream(new ZstdCompressorOutputStream(new FileOutputStream(outputPath), 25))) {
