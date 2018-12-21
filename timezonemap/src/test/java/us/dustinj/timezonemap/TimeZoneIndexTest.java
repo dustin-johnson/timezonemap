@@ -198,6 +198,33 @@ public class TimeZoneIndexTest {
     }
 
     @Test
+    public void readmeExample() {
+        // Initialize of a region that spans from Germany to Bulgaria.
+        // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
+        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(43.5, 8.0, 53.00, 26.0);
+
+        String berlin = scopedEngine.getTimeZoneId(52.518424, 13.404776).get(); // Returns "Europe/Berlin"
+        String prague = scopedEngine.getTimeZoneId(50.074154, 14.437403).get(); // Returns "Europe/Prague"
+        String budapest = scopedEngine.getTimeZoneId(47.49642, 19.04970).get(); // Returns "Europe/Budapest"
+        String milan = scopedEngine.getTimeZoneId(45.466677, 9.188258).get();   // Returns "Europe/Rome"
+        String adriaticSea = scopedEngine.getTimeZoneId(44.337, 13.8282).get(); // Returns "Etc/GMT-1"
+
+        // --------------------
+
+        java.util.TimeZone timeZone = java.util.TimeZone.getTimeZone(berlin);
+        timeZone.observesDaylightTime(); // Returns true
+
+        // --------------------
+
+        assertThat(berlin).isEqualTo("Europe/Berlin");
+        assertThat(prague).isEqualTo("Europe/Prague");
+        assertThat(budapest).isEqualTo("Europe/Budapest");
+        assertThat(milan).isEqualTo("Europe/Rome");
+        assertThat(adriaticSea).isEqualTo("Etc/GMT-1");
+        assertThat(timeZone.observesDaylightTime()).isTrue();
+    }
+
+    @Test
     public void scopedRegionTest_Africa_Rectangular() {
         TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
                 3.97131, 22.78090,
