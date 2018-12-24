@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -23,21 +22,16 @@ import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStre
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
 import com.esri.core.geometry.GeometryCursor;
-import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.OperatorIntersection;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 import com.esri.core.geometry.SimpleGeometryCursor;
-import com.esri.core.geometry.SpatialReference;
 
 import us.dustinj.timezonemap.data.DataLocator;
-import us.dustinj.timezonemap.serialization.LatLon;
 import us.dustinj.timezonemap.serialization.Serialization;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneIndex {
-    static final SpatialReference SPATIAL_REFERENCE = SpatialReference.create(4326); // WGS84_WKID = 4326
-
     private final List<TimeZone> timeZones;
     private final Envelope2D indexedArea;
 
@@ -84,8 +78,9 @@ public final class TimeZoneIndex {
      */
     public static TimeZoneIndex forRegion(double minDegreesLatitude, double minDegreesLongitude,
             double maxDegreesLatitude, double maxDegreesLongitude) {
-        precondition(minDegreesLatitude < maxDegreesLatitude, "Minimum latitude must be less than maximum latitude");
-        precondition(minDegreesLongitude < maxDegreesLongitude,
+        Util.precondition(minDegreesLatitude < maxDegreesLatitude,
+                "Minimum latitude must be less than maximum latitude");
+        Util.precondition(minDegreesLongitude < maxDegreesLongitude,
                 "Minimum longitude must be less than maximum longitude");
 
         try (InputStream inputStream = DataLocator.getDataInputStream();
@@ -112,7 +107,7 @@ public final class TimeZoneIndex {
                                 }
                             })
                             .map(Serialization::deserialize)
-                            .map(TimeZoneIndex::convertToEsriBackedTimeZone);
+                            .map(Util::convertToEsriBackedTimeZone);
             Envelope2D indexArea = new Envelope2D(
                     Math.nextDown(minDegreesLongitude),
                     Math.nextDown(minDegreesLatitude),
@@ -132,8 +127,9 @@ public final class TimeZoneIndex {
      * #forRegion(double, double, double, double)}, then the returned list represents all time zones that overlap with
      * the coordinates with which this index was initialized.
      * <p>
-     * This list represents the full range of identifiers that can be returned by {@link #getTimeZoneId(double, double)}
-     * or {@link #getAllTimeZoneIds(double, double)}.
+     * This list represents the full range of identifiers that can be returned by {@link #getOverlappingTimeZone(double,
+     * double)}
+     * or {@link #getOverlappingTimeZones(double, double)}.
      *
      * @return A sorted list of known time zone identifiers contained in this index.
      */
@@ -152,8 +148,9 @@ public final class TimeZoneIndex {
      * overlap with the coordinates with which this index was initialized and the regions are clipped to the
      * initialization coordinates.
      * <p>
-     * This list represents the full range of time zones that can be returned by {@link #getTimeZoneId(double, double)}
-     * or {@link #getAllTimeZoneIds(double, double)}.
+     * This list represents the full range of time zones that can be returned by {@link #getOverlappingTimeZone(double,
+     * double)}
+     * or {@link #getOverlappingTimeZones(double, double)}.
      *
      * @return A sort list of known time zones contained in this index.
      */
@@ -162,73 +159,62 @@ public final class TimeZoneIndex {
     }
 
     /**
-     * Retrieve the time zone identifier in use at the provided coordinates. This identifier can be used in modern
-     * Java versions to initialize the java.util.TimeZone object and interact with the time zone programmatically.
+     * Retrieve the time zone in use at the provided coordinates. The identifier containing in this time zone can be
+     * used in modern Java versions to initialize the java.util.TimeZone object and interact with the time zone
+     * programmatically.
      *
      * @param degreesLatitude
      *         90.0 is the north pole, -90.0 is the south pole, 0 is the equator.
      * @param degreesLongitude
      *         180.0 to -180.0 such that the White House of the United States is at -77.036586 degrees longitude
      *         (and 38.897670 degrees latitude).
-     * @return The time zone identifier that is in use at the provided coordinates, if such a time zone exists. If
-     *         multiple time zones overlap the provided coordinates, as can happen in disputed areas such as the South
-     *         China Sea, then the time zone with the smallest land area will be provided.
+     * @return A time zone that is in use at the provided coordinates, if such a time zone exists. If multiple time
+     *         zones overlap the provided coordinates, as can happen in disputed areas such as the South China Sea, then
+     *         the time zone with the smallest land area will be provided. If this index was initialized using {@link
+     *         #forRegion(double, double, double, double)}, then the returned time zone region is clipped to the
+     *         initialization coordinates.
      * @throws IllegalArgumentException
-     *         If the provided coordinates are outside of the area index by this instance of the time zone index.
+     *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
-    public Optional<String> getTimeZoneId(double degreesLatitude, double degreesLongitude) {
-        return getOverlappingTimeZones(degreesLatitude, degreesLongitude)
-                .map(TimeZone::getZoneId)
+    public Optional<TimeZone> getOverlappingTimeZone(double degreesLatitude, double degreesLongitude) {
+        return getOverlappingTimeZoneStream(degreesLatitude, degreesLongitude)
                 .findFirst();
     }
 
     /**
-     * Retrieve all time zone identifiers in use at the provided coordinates. Multiple time zones can overlap the
-     * provided location in disputed areas such as the South China Sea). The returned time zones  are sorted such that
-     * the first entry in the list is the time zone with the smallest land area. These identifiers can be used in modern
-     * Java versions to initialize the java.util.TimeZone object and interact with the time zone programmatically.
+     * Retrieve all time zones in use at the provided coordinates. Multiple time zones can overlap the
+     * provided location in disputed areas such as the South China Sea). The returned time zones are sorted such that
+     * the first entry in the list is the time zone with the smallest land area. The identifiers contained in the
+     * returned time zones can be used in modern Java versions to initialize the java.util.TimeZone object and interact
+     * with the time zone programmatically.
      *
      * @param degreesLatitude
      *         90.0 is the north pole, -90.0 is the south pole, 0 is the equator.
      * @param degreesLongitude
      *         180.0 to -180.0 such that the White House of the United States is at -77.036586 degrees longitude
      *         (and 38.897670 degrees latitude).
-     * @return List of time zone identifiers that are in use at the provided coordinates, if such time zones exists. If
-     *         multiple time zones overlap the provided coordinates, as can happen in disputed areas such as the South
-     *         China Sea, then all overlapping time zones are return, sorted such that the zone with the smallest
-     *         land area is first in the list. If no time zones overlap the provided coordinates, then an empty list
-     *         will be returned.
+     * @return List of time zones that are in use at the provided coordinates, if such time zones exists. If multiple
+     *         time zones overlap the provided coordinates, as can happen in disputed areas such as the South China
+     *         Sea, then all overlapping time zones are returned, sorted such that the zone with the smallest land area
+     *         is first in the list. If no time zones overlap the provided coordinates, then an empty list will be
+     *         returned. If this index was initialized using {@link #forRegion(double, double, double, double)}, then
+     *         the regions are clipped to the initialization coordinates.
      * @throws IllegalArgumentException
-     *         If the provided coordinates are outside of the area index by this instance of the time zone index.
+     *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
-    public List<String> getAllTimeZoneIds(double degreesLatitude, double degreesLongitude) {
-        return getOverlappingTimeZones(degreesLatitude, degreesLongitude)
-                .map(TimeZone::getZoneId)
+    public List<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
+        return getOverlappingTimeZoneStream(degreesLatitude, degreesLongitude)
                 .collect(Collectors.toList());
     }
 
-    private Stream<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
+    private Stream<TimeZone> getOverlappingTimeZoneStream(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
-        precondition(this.indexedArea.containsExclusive(point.getXY()), "Requested point is outside the indexed area");
+        Util.precondition(this.indexedArea.containsExclusive(point.getXY()),
+                "Requested point is outside the indexed area");
 
         return this.timeZones.stream()
-                .filter(t -> GeometryEngine.contains(t.getRegion(), point, SPATIAL_REFERENCE) ||
-                        GeometryEngine.touches(t.getRegion(), point, SPATIAL_REFERENCE));
-    }
-
-    private static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
-        Polygon newPolygon = new Polygon();
-
-        for (List<LatLon> region : timeZone.getRegions().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList())) {
-            newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
-            region.subList(1, region.size())
-                    .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
-        }
-
-        return new TimeZone(timeZone.getTimeZoneId(), newPolygon);
+                .filter(t -> Util.containsInclusive(t.getRegion(), point));
     }
 
     static Polygon envelopeToPolygon(Envelope2D envelope) {
@@ -286,7 +272,7 @@ public final class TimeZoneIndex {
                     GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
                             new SimpleGeometryCursor(t.timeZone.getRegion()),
                             new SimpleGeometryCursor(indexAreaPolygon),
-                            SPATIAL_REFERENCE, null, 4);
+                            Util.SPATIAL_REFERENCE, null, 4);
 
                     List<Polygon> list = new ArrayList<>();
                     Geometry geometry;
@@ -301,12 +287,6 @@ public final class TimeZoneIndex {
                             .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
                 })
                 .collect(Collectors.toList());
-    }
-
-    private static void precondition(boolean test, String message) {
-        if (!test) {
-            throw new IllegalArgumentException(message);
-        }
     }
 
     private static class ExtentsAndTimeZone {

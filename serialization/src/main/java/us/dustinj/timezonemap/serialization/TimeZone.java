@@ -16,6 +16,12 @@ public final class TimeZone {
         return this.timeZoneId;
     }
 
+    /**
+     * Get the regions covered by this time zone.
+     *
+     * @return A list of polygons, each with multiple rings (where the first ring is the outer boundary and
+     *         subsequent rings are holes in that area), and each ring is composed of multiple points.
+     */
     public List<List<List<LatLon>>> getRegions() {
         return this.regions;
     }

@@ -89,23 +89,31 @@ public class TimeZoneIndexTest {
                 .collect(Collectors.toList());
 
         for (Location location : locations) {
-            List<String> everywhereResult = EVERYWHERE_INDEX.getAllTimeZoneIds(location.latitude, location.longitude);
-            assertThat(everywhereResult)
+            List<String> everywhereResults =
+                    EVERYWHERE_INDEX.getOverlappingTimeZones(location.latitude, location.longitude).stream()
+                            .map(TimeZone::getZoneId)
+                            .collect(Collectors.toList());
+            Optional<String> everywhereResult =
+                    EVERYWHERE_INDEX.getOverlappingTimeZone(location.latitude, location.longitude)
+                            .map(TimeZone::getZoneId);
+            assertThat(everywhereResults)
                     .as("Everywhere - All time zones - " + location.description)
                     .isEqualTo(location.timeZoneIds);
-            assertThat(EVERYWHERE_INDEX.getTimeZoneId(location.latitude, location.longitude))
+            assertThat(everywhereResult)
                     .as("Everywhere - Single time zone - " + location.description)
-                    .isEqualTo(Optional.of(location.timeZoneIds.get(0)));
+                    .contains(location.timeZoneIds.get(0));
 
             List<String> scopedResult = TimeZoneIndex.forRegion(
                     location.latitude - 1,
                     location.longitude - 1,
                     location.latitude + 1,
                     location.longitude + 1)
-                    .getAllTimeZoneIds(location.latitude, location.longitude);
+                    .getOverlappingTimeZones(location.latitude, location.longitude).stream()
+                    .map(TimeZone::getZoneId)
+                    .collect(Collectors.toList());
             assertThat(scopedResult)
                     .as("Scoped - " + location.description)
-                    .isEqualTo(everywhereResult);
+                    .isEqualTo(everywhereResults);
         }
     }
 
@@ -203,11 +211,16 @@ public class TimeZoneIndexTest {
         // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
         TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(43.5, 8.0, 53.00, 26.0);
 
-        String berlin = scopedEngine.getTimeZoneId(52.518424, 13.404776).get(); // Returns "Europe/Berlin"
-        String prague = scopedEngine.getTimeZoneId(50.074154, 14.437403).get(); // Returns "Europe/Prague"
-        String budapest = scopedEngine.getTimeZoneId(47.49642, 19.04970).get(); // Returns "Europe/Budapest"
-        String milan = scopedEngine.getTimeZoneId(45.466677, 9.188258).get();   // Returns "Europe/Rome"
-        String adriaticSea = scopedEngine.getTimeZoneId(44.337, 13.8282).get(); // Returns "Etc/GMT-1"
+        String berlin =
+                scopedEngine.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
+        String prague =
+                scopedEngine.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
+        String budapest =
+                scopedEngine.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
+        String milan =
+                scopedEngine.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
+        String adriaticSea =
+                scopedEngine.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
 
         // --------------------
 
@@ -230,23 +243,29 @@ public class TimeZoneIndexTest {
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(Math.nextUp(10.29621), 22.78090))
+        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(Math.nextUp(10.29621), 22.78090))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(10.29621, Math.nextDown(22.78090)))
+        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(10.29621, Math.nextDown(22.78090)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(Math.nextDown(3.97131), 28.10539))
+        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(Math.nextDown(3.97131), 28.10539))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getTimeZoneId(3.97131, Math.nextUp(28.10539)))
+        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(scopedEngine.getTimeZoneId(10.29621, 22.78090)).contains("Africa/Bangui"); // Upper left corner
-        assertThat(scopedEngine.getTimeZoneId(3.97131, 28.10539)).contains("Africa/Lubumbashi"); // Lower right corner
+        assertThat(scopedEngine.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
+                .contains("Africa/Bangui"); // Upper left corner
+        assertThat(scopedEngine.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
+                .contains("Africa/Lubumbashi"); // Lower right corner
 
         // Check a few interesting places in this oddly time zoned region
-        assertThat(scopedEngine.getTimeZoneId(10.225818, 24.293622)).contains("Africa/Khartoum");
-        assertThat(scopedEngine.getTimeZoneId(10.134434, 25.520542)).contains("Africa/Juba");
-        assertThat(scopedEngine.getTimeZoneId(10.018797, 26.681882)).contains("Africa/Khartoum");
-        assertThat(scopedEngine.getTimeZoneId(5.150331, 27.348469)).contains("Africa/Bangui");
+        assertThat(scopedEngine.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
+                .contains("Africa/Khartoum");
+        assertThat(scopedEngine.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
+                .contains("Africa/Juba");
+        assertThat(scopedEngine.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
+                .contains("Africa/Khartoum");
+        assertThat(scopedEngine.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
+                .contains("Africa/Bangui");
     }
 
     @Test
@@ -256,11 +275,16 @@ public class TimeZoneIndexTest {
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
-        assertThat(scopedEngine.getTimeZoneId(40.169102, -123.283836)).contains("America/Los_Angeles");
-        assertThat(scopedEngine.getTimeZoneId(40.169102, -106.843598)).contains("America/Denver");
-        assertThat(scopedEngine.getTimeZoneId(40.169102, -93.821612)).contains("America/Chicago");
-        assertThat(scopedEngine.getTimeZoneId(40.169102, -86.164327)).contains("America/Indiana/Indianapolis");
-        assertThat(scopedEngine.getTimeZoneId(40.169102, -77.030765)).contains("America/New_York");
+        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
+                .contains("America/Los_Angeles");
+        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
+                .contains("America/Denver");
+        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
+                .contains("America/Chicago");
+        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
+                .contains("America/Indiana/Indianapolis");
+        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
+                .contains("America/New_York");
     }
 
     @Test

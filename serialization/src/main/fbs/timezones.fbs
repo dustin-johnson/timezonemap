@@ -6,7 +6,7 @@ table TimeZone {
 }
 
 table Polygon {
-    rings:[Ring];
+    rings:[Ring]; // First ring is the outer boundary, any others are holes in the boundary.
 }
 
 table Ring {
