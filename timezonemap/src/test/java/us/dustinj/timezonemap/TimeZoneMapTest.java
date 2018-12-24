@@ -178,8 +178,7 @@ public class TimeZoneMapTest {
     }
 
     @Test
-    public void testKnownZonesAndIds() {
-        assertThat(EVERYWHERE.getKnownZoneIds().size()).isGreaterThan(400);
+    public void testKnownZones() {
         assertThat(EVERYWHERE.getKnownTimeZones().size()).isGreaterThan(400);
 
         // Small stripe horizontally across the USA
@@ -187,10 +186,9 @@ public class TimeZoneMapTest {
         TimeZoneMap scopedEngine = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
 
         // Accurate results, sorted by land area (smallest first)
-        assertThat(scopedEngine.getKnownZoneIds()).contains("America/Indiana/Indianapolis", "America/Los_Angeles",
-                "America/New_York", "America/Denver", "America/Chicago");
         assertThat(scopedEngine.getKnownTimeZones().stream().map(TimeZone::getZoneId))
-                .containsExactlyElementsOf(scopedEngine.getKnownZoneIds());
+                .contains("America/Indiana/Indianapolis", "America/Los_Angeles",
+                        "America/New_York", "America/Denver", "America/Chicago");
 
         envelope.inflate(1E-10, 1E-10); // Inflate the envelope just slightly to avoid precision errors.
         scopedEngine.getKnownTimeZones().forEach(t -> {

@@ -121,26 +121,6 @@ public final class TimeZoneMap {
     }
 
     /**
-     * A list of all time zone identifiers contained in this index. The list is sorted by the area the time zone
-     * covers, smallest first. Note, the area computation used for sorting considers the real-world area the time
-     * zone covers regardless of the region the index was initialized for. If this index was initialized using {@link
-     * #forRegion(double, double, double, double)}, then the returned list represents all time zones that overlap with
-     * the coordinates with which this index was initialized.
-     * <p>
-     * This list represents the full range of identifiers that can be returned by {@link #getOverlappingTimeZone(double,
-     * double)}
-     * or {@link #getOverlappingTimeZones(double, double)}.
-     *
-     * @return A sorted list of known time zone identifiers contained in this index.
-     */
-    public List<String> getKnownZoneIds() {
-        return timeZones.stream()
-                .map(TimeZone::getZoneId)
-                .distinct()
-                .collect(Collectors.toList());
-    }
-
-    /**
      * A list of all time zone identifiers, and their regions, contained in this index. The list is sorted by the area
      * the time zone covers, smallest first. Note, the area computation used for sorting considers the real-world area
      * the time zone covers regardless of the region the index was initialized for. If this index was initialized using
