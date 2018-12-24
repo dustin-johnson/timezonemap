@@ -25,8 +25,8 @@ import com.esri.core.geometry.GeometryException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
-public class TimeZoneIndexTest {
-    private static final TimeZoneIndex EVERYWHERE_INDEX = TimeZoneIndex.forEverywhere();
+public class TimeZoneMapTest {
+    private static final TimeZoneMap EVERYWHERE = TimeZoneMap.forEverywhere();
 
     private static class Location {
         final double latitude;
@@ -90,12 +90,11 @@ public class TimeZoneIndexTest {
 
         for (Location location : locations) {
             List<String> everywhereResults =
-                    EVERYWHERE_INDEX.getOverlappingTimeZones(location.latitude, location.longitude).stream()
+                    EVERYWHERE.getOverlappingTimeZones(location.latitude, location.longitude).stream()
                             .map(TimeZone::getZoneId)
                             .collect(Collectors.toList());
             Optional<String> everywhereResult =
-                    EVERYWHERE_INDEX.getOverlappingTimeZone(location.latitude, location.longitude)
-                            .map(TimeZone::getZoneId);
+                    EVERYWHERE.getOverlappingTimeZone(location.latitude, location.longitude).map(TimeZone::getZoneId);
             assertThat(everywhereResults)
                     .as("Everywhere - All time zones - " + location.description)
                     .isEqualTo(location.timeZoneIds);
@@ -103,7 +102,7 @@ public class TimeZoneIndexTest {
                     .as("Everywhere - Single time zone - " + location.description)
                     .contains(location.timeZoneIds.get(0));
 
-            List<String> scopedResult = TimeZoneIndex.forRegion(
+            List<String> scopedResult = TimeZoneMap.forRegion(
                     location.latitude - 1,
                     location.longitude - 1,
                     location.latitude + 1,
@@ -120,19 +119,19 @@ public class TimeZoneIndexTest {
     @Test
     public void forRegion() {
         // Equal latitudes
-        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 1.0, 4.0))
+        assertThatThrownBy(() -> TimeZoneMap.forRegion(1.0, 2.0, 1.0, 4.0))
                 .isInstanceOf(IllegalArgumentException.class);
 
         // Max latitude < min latitude
-        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 0.0, 4.0))
+        assertThatThrownBy(() -> TimeZoneMap.forRegion(1.0, 2.0, 0.0, 4.0))
                 .isInstanceOf(IllegalArgumentException.class);
 
         // Equal longitude
-        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 3.0, 2.0))
+        assertThatThrownBy(() -> TimeZoneMap.forRegion(1.0, 2.0, 3.0, 2.0))
                 .isInstanceOf(IllegalArgumentException.class);
 
         // Max longitude < min longitude
-        assertThatThrownBy(() -> TimeZoneIndex.forRegion(1.0, 2.0, 3.0, 0.0))
+        assertThatThrownBy(() -> TimeZoneMap.forRegion(1.0, 2.0, 3.0, 0.0))
                 .isInstanceOf(IllegalArgumentException.class);
     }
 
@@ -141,14 +140,14 @@ public class TimeZoneIndexTest {
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
         Path outputPath =
-                new File(TimeZoneIndexTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
                         .toPath()                 // /target/test-classes
                         .getParent()              // /target
                         .resolve("shape_output"); // /target/shape_output
 
         Files.createDirectories(outputPath);
 
-        for (TimeZone timeZone : EVERYWHERE_INDEX.getKnownTimeZones()) {
+        for (TimeZone timeZone : EVERYWHERE.getKnownTimeZones()) {
             try {
                 Files.write(outputPath.resolve(timeZone.getZoneId().replace("/", "_") + ".json"),
                         GeometryEngine.geometryToGeoJson(timeZone.getRegion()).getBytes(StandardCharsets.UTF_8));
@@ -159,7 +158,7 @@ public class TimeZoneIndexTest {
 
         // Build a world.json
         FeatureCollection featureCollection = new FeatureCollection();
-        featureCollection.setFeatures(EVERYWHERE_INDEX.getKnownTimeZones().stream()
+        featureCollection.setFeatures(EVERYWHERE.getKnownTimeZones().stream()
                 .map(TimeZone::getRegion)
                 .map(GeometryEngine::geometryToGeoJson)
                 .map(jsonString -> {
@@ -180,13 +179,12 @@ public class TimeZoneIndexTest {
 
     @Test
     public void testKnownZonesAndIds() {
-        assertThat(EVERYWHERE_INDEX.getKnownZoneIds().size()).isGreaterThan(400);
-        assertThat(EVERYWHERE_INDEX.getKnownTimeZones().size()).isGreaterThan(400);
+        assertThat(EVERYWHERE.getKnownZoneIds().size()).isGreaterThan(400);
+        assertThat(EVERYWHERE.getKnownTimeZones().size()).isGreaterThan(400);
 
         // Small stripe horizontally across the USA
         Envelope2D envelope = new Envelope2D(-123.283836, 40.169102, -77.030765, 40.169103);
-        TimeZoneIndex scopedEngine =
-                TimeZoneIndex.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
+        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
 
         // Accurate results, sorted by land area (smallest first)
         assertThat(scopedEngine.getKnownZoneIds()).contains("America/Indiana/Indianapolis", "America/Los_Angeles",
@@ -209,18 +207,17 @@ public class TimeZoneIndexTest {
     public void readmeExample() {
         // Initialize of a region that spans from Germany to Bulgaria.
         // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
-        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(43.5, 8.0, 53.00, 26.0);
+        TimeZoneMap scopedMap = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
 
         String berlin =
-                scopedEngine.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
+                scopedMap.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
         String prague =
-                scopedEngine.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
+                scopedMap.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
         String budapest =
-                scopedEngine.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
+                scopedMap.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
         String milan =
-                scopedEngine.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
-        String adriaticSea =
-                scopedEngine.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
+                scopedMap.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
+        String adriaticSea = scopedMap.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
 
         // --------------------
 
@@ -239,7 +236,7 @@ public class TimeZoneIndexTest {
 
     @Test
     public void scopedRegionTest_Africa_Rectangular() {
-        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
+        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
@@ -271,7 +268,7 @@ public class TimeZoneIndexTest {
     @Test
     public void scopedRegionTest_USA_Line() {
         // Small stripe horizontally across the USA
-        TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(
+        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
@@ -291,6 +288,6 @@ public class TimeZoneIndexTest {
     public void envelopeToPolygon() {
         Envelope2D envelope = new Envelope2D(1.0, 2.0, 3.0, 4.0);
 
-        assertThat(TimeZoneIndex.envelopeToPolygon(envelope).calculateArea2D()).isEqualTo(envelope.getArea());
+        assertThat(TimeZoneMap.envelopeToPolygon(envelope).calculateArea2D()).isEqualTo(envelope.getArea());
     }
 }

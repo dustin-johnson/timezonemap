@@ -19,17 +19,17 @@ This library seeks to:
 
 ## Examples
 ```java
-import us.dustinj.timezonemap.TimeZoneIndex;
+import us.dustinj.timezonemap.TimeZoneMap;
 
 // Initialize of a region that spans from Germany to Bulgaria.
 // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
-TimeZoneIndex scopedEngine = TimeZoneIndex.forRegion(43.5, 8.0, 53.00, 26.0);
+TimeZoneMap scopedMap = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
 
-String berlin = scopedEngine.getTimeZoneId(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
-String prague = scopedEngine.getTimeZoneId(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
-String budapest = scopedEngine.getTimeZoneId(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
-String milan = scopedEngine.getTimeZoneId(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
-String adriaticSea = scopedEngine.getTimeZoneId(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
+String berlin = scopedMap.getTimeZoneId(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
+String prague = scopedMap.getTimeZoneId(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
+String budapest = scopedMap.getTimeZoneId(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
+String milan = scopedMap.getTimeZoneId(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
+String adriaticSea = scopedMap.getTimeZoneId(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
 ```
 
 If you're on Java 8 or above, you can convert the returned time zone into a proper `java.util.TimeZone`:

@@ -31,28 +31,28 @@ import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Serialization;
 
 @SuppressWarnings("WeakerAccess")
-public final class TimeZoneIndex {
+public final class TimeZoneMap {
     private final List<TimeZone> timeZones;
     private final Envelope2D indexedArea;
 
-    private TimeZoneIndex(List<TimeZone> timeZones, Envelope2D indexedArea) {
+    private TimeZoneMap(List<TimeZone> timeZones, Envelope2D indexedArea) {
         this.timeZones = timeZones;
         this.indexedArea = indexedArea;
     }
 
     /**
-     * Creates a new instance of {@link TimeZoneIndex} and initializes it with an index for the entire world.
+     * Creates a new instance of {@link TimeZoneMap} and initializes it with an index for the entire world.
      * This is a blocking long running operation that takes about 1-2 seconds on desktop hardware. If performance is
      * a concern, consider using {@link #forRegion(double, double, double, double)}.
      *
      * @return An index that can be used for querying locations anywhere in the world.
      */
-    public static TimeZoneIndex forEverywhere() {
+    public static TimeZoneMap forEverywhere() {
         return forRegion(-90.0, -180.0, 90.0, 180.0);
     }
 
     /**
-     * Creates a new instance of {@link TimeZoneIndex} and initializes it with an index valid for anywhere within the
+     * Creates a new instance of {@link TimeZoneMap} and initializes it with an index valid for anywhere within the
      * provided coordinates (inclusive). This is a blocking long running operation that can be very quick depending on
      * the area described by the provided coordinates. Initializing the index this way not only improves speed, but
      * also reduces memory usage, as only the regions withing the provided coordinates are held in memory, with large
@@ -76,7 +76,7 @@ public final class TimeZoneIndex {
      * @throws IllegalArgumentException
      *         If minimum values aren't less than maximum values.
      */
-    public static TimeZoneIndex forRegion(double minDegreesLatitude, double minDegreesLongitude,
+    public static TimeZoneMap forRegion(double minDegreesLatitude, double minDegreesLongitude,
             double maxDegreesLatitude, double maxDegreesLongitude) {
         Util.precondition(minDegreesLatitude < maxDegreesLatitude,
                 "Minimum latitude must be less than maximum latitude");
@@ -114,7 +114,7 @@ public final class TimeZoneIndex {
                     Math.nextUp(maxDegreesLongitude),
                     Math.nextUp(maxDegreesLatitude));
 
-            return new TimeZoneIndex(build(timeZones, indexArea), indexArea);
+            return new TimeZoneMap(build(timeZones, indexArea), indexArea);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read time zone data resource file", e);
         }
