@@ -1,13 +1,9 @@
 package us.dustinj.timezonemap;
 
 import java.util.Objects;
-import java.util.stream.IntStream;
-import java.util.stream.LongStream;
-import java.util.stream.Stream;
 
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Point2D;
 import com.esri.core.geometry.Polygon;
 
 /**
@@ -44,7 +40,10 @@ public final class TimeZone {
 
     /**
      * Calculate the minimum distance (in meters) that would need to be traveled from the provided location to no
-     * longer be in this time zone.
+     * longer be in this time zone. Note, if this region comes from a map that was initialized with
+     * {@link TimeZoneMap#forRegion(double, double, double, double)}, then this distance could represent the distance
+     * to the boundary provided during initialization, if that boundary is the closest way of exiting this time
+     * zone's region.
      *
      * @param degreesLatitude
      *         90.0 is the north pole, -90.0 is the south pole, 0 is the equator.
@@ -52,9 +51,12 @@ public final class TimeZone {
      *         180.0 to -180.0 such that positive is East, negative is West, and the White House of the United States
      *         is at -77.036586 degrees longitude (and 38.897670 degrees latitude).
      * @return The minimum distance (in meters) that would need to be traveled from the provided location to no longer
-     *         be in this time zone.
+     *         be in this time zone. Note, if this region comes from a map that was initialized with
+     *         {@link TimeZoneMap#forRegion(double, double, double, double)}, then this distance could represent the
+     *         distance to the boundary provided during initialization, if that boundary is the closest way of exiting
+     *         this time zone's region.
      * @throws IllegalArgumentException
-     *         If the provided location is not within this time zone, inclusive of the boundary.
+     *         If the provided location is not within this time zone, inclusive of the edge.
      */
     public double getDistanceFromBoundary(double degreesLatitude, double degreesLongitude) {
         Point location = new Point(degreesLongitude, degreesLatitude);
