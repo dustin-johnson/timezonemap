@@ -2,6 +2,7 @@ package us.dustinj.timezonemap;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.byLessThan;
 
 import java.io.File;
 import java.io.IOException;
@@ -25,6 +26,7 @@ import com.esri.core.geometry.GeometryException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
 
+@SuppressWarnings("OptionalGetWithoutIsPresent")
 public class TimeZoneMapTest {
     private static final TimeZoneMap EVERYWHERE = TimeZoneMap.forEverywhere();
 
@@ -139,21 +141,8 @@ public class TimeZoneMapTest {
     @Test
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
-        Path outputPath =
-                new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
-                        .toPath()                 // /target/test-classes
-                        .getParent()              // /target
-                        .resolve("shape_output"); // /target/shape_output
-
-        Files.createDirectories(outputPath);
-
         for (TimeZone timeZone : EVERYWHERE.getKnownTimeZones()) {
-            try {
-                Files.write(outputPath.resolve(timeZone.getZoneId().replace("/", "_") + ".json"),
-                        GeometryEngine.geometryToGeoJson(timeZone.getRegion()).getBytes(StandardCharsets.UTF_8));
-            } catch (GeometryException e) {
-                System.err.println(e.getMessage() + " - " + timeZone.getZoneId());
-            }
+            outputJson(timeZone);
         }
 
         // Build a world.json
@@ -174,7 +163,7 @@ public class TimeZoneMapTest {
                     return feature;
                 })
                 .collect(Collectors.toList()));
-        new ObjectMapper().writeValue(outputPath.resolve("World.json").toFile(), featureCollection);
+        new ObjectMapper().writeValue(getShapeOutputPath().resolve("World.json").toFile(), featureCollection);
     }
 
     @Test
@@ -233,52 +222,70 @@ public class TimeZoneMapTest {
     }
 
     @Test
+    public void distanceFromBoundary() {
+        // GMT+5 on the left side of Jamaica such that the left side of the below region in in GMT+5, but the right
+        // side is excerpted due to Jamaica.
+        TimeZoneMap scoped = TimeZoneMap.forRegion(
+                17.361963, -79.670415,
+                19.085664, -77.747903);
+
+        // Right next to the boundary's edge to show that the time zone distance is clipped by the map index region.
+        assertThat(scoped.getOverlappingTimeZone(18, -79.67).get().getDistanceFromBoundary(18, -79.67))
+                .isCloseTo(44, byLessThan(0.1));
+
+        // Next to the hole created by Jamaica to ensure we deal with the hole correctly. Use a loose tolerance
+        // because we don't care about subtle changes in the position of the Jamaica region, just that it exists.
+        assertThat(scoped.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
+                .isCloseTo(1418, byLessThan(1_000.0));
+    }
+
+    @Test
     public void scopedRegionTest_Africa_Rectangular() {
-        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(
+        TimeZoneMap scoped = TimeZoneMap.forRegion(
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(Math.nextUp(10.29621), 22.78090))
+        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(Math.nextUp(10.29621), 22.78090))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(10.29621, Math.nextDown(22.78090)))
+        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(10.29621, Math.nextDown(22.78090)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(Math.nextDown(3.97131), 28.10539))
+        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(Math.nextDown(3.97131), 28.10539))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scopedEngine.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
+        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(scopedEngine.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
                 .contains("Africa/Bangui"); // Upper left corner
-        assertThat(scopedEngine.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
                 .contains("Africa/Lubumbashi"); // Lower right corner
 
         // Check a few interesting places in this oddly time zoned region
-        assertThat(scopedEngine.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
                 .contains("Africa/Khartoum");
-        assertThat(scopedEngine.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
                 .contains("Africa/Juba");
-        assertThat(scopedEngine.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
                 .contains("Africa/Khartoum");
-        assertThat(scopedEngine.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
                 .contains("Africa/Bangui");
     }
 
     @Test
     public void scopedRegionTest_USA_Line() {
         // Small stripe horizontally across the USA
-        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(
+        TimeZoneMap scoped = TimeZoneMap.forRegion(
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
-        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
                 .contains("America/Los_Angeles");
-        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
                 .contains("America/Denver");
-        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
                 .contains("America/Chicago");
-        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
                 .contains("America/Indiana/Indianapolis");
-        assertThat(scopedEngine.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
+        assertThat(scoped.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
                 .contains("America/New_York");
     }
 
@@ -287,5 +294,26 @@ public class TimeZoneMapTest {
         Envelope2D envelope = new Envelope2D(1.0, 2.0, 3.0, 4.0);
 
         assertThat(TimeZoneMap.envelopeToPolygon(envelope).calculateArea2D()).isEqualTo(envelope.getArea());
+    }
+
+    private Path getShapeOutputPath() throws IOException {
+        Path outputPath =
+                new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                        .toPath()                 // /target/test-classes
+                        .getParent()              // /target
+                        .resolve("shape_output"); // /target/shape_output
+
+        Files.createDirectories(outputPath);
+
+        return outputPath;
+    }
+
+    private void outputJson(TimeZone timeZone) throws IOException {
+        try {
+            Files.write(getShapeOutputPath().resolve(timeZone.getZoneId().replace("/", "_") + ".json"),
+                    GeometryEngine.geometryToGeoJson(timeZone.getRegion()).getBytes(StandardCharsets.UTF_8));
+        } catch (GeometryException e) {
+            System.err.println(e.getMessage() + " - " + timeZone.getZoneId());
+        }
     }
 }
