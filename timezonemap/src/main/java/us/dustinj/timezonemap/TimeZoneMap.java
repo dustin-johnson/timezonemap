@@ -252,14 +252,14 @@ public final class TimeZoneMap {
                     GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
                             new SimpleGeometryCursor(t.timeZone.getRegion()),
                             new SimpleGeometryCursor(indexAreaPolygon),
-                            Util.SPATIAL_REFERENCE, null, 4);
+                            Util.SPATIAL_REFERENCE, null, -1);
 
                     List<Polygon> list = new ArrayList<>();
                     Geometry geometry;
                     while ((geometry = intersectedGeometries.next()) != null) {
-                        if (geometry instanceof Polygon) {
-                            list.add((Polygon) geometry);
-                        }
+                        // Since we're intersecting polygons, the only thing we can get back must be 2 dimensional,
+                        // so it's safe to cast everything we get back as a polygon.
+                        list.add((Polygon) geometry);
                     }
 
                     return list.stream()
