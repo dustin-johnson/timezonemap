@@ -141,13 +141,13 @@ public class TimeZoneMapTest {
     @Test
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
-        for (TimeZone timeZone : EVERYWHERE.getKnownTimeZones()) {
+        for (TimeZone timeZone : EVERYWHERE.getTimeZones()) {
             outputJson(timeZone);
         }
 
         // Build a world.json
         FeatureCollection featureCollection = new FeatureCollection();
-        featureCollection.setFeatures(EVERYWHERE.getKnownTimeZones().stream()
+        featureCollection.setFeatures(EVERYWHERE.getTimeZones().stream()
                 .map(TimeZone::getRegion)
                 .map(GeometryEngine::geometryToGeoJson)
                 .map(jsonString -> {
@@ -168,19 +168,19 @@ public class TimeZoneMapTest {
 
     @Test
     public void testKnownZones() {
-        assertThat(EVERYWHERE.getKnownTimeZones().size()).isGreaterThan(400);
+        assertThat(EVERYWHERE.getTimeZones().size()).isGreaterThan(400);
 
         // Small stripe horizontally across the USA
         Envelope2D envelope = new Envelope2D(-123.283836, 40.169102, -77.030765, 40.169103);
         TimeZoneMap scopedEngine = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
 
         // Accurate results, sorted by land area (smallest first)
-        assertThat(scopedEngine.getKnownTimeZones().stream().map(TimeZone::getZoneId))
+        assertThat(scopedEngine.getTimeZones().stream().map(TimeZone::getZoneId))
                 .contains("America/Indiana/Indianapolis", "America/Los_Angeles",
                         "America/New_York", "America/Denver", "America/Chicago");
 
         envelope.inflate(1E-10, 1E-10); // Inflate the envelope just slightly to avoid precision errors.
-        scopedEngine.getKnownTimeZones().forEach(t -> {
+        scopedEngine.getTimeZones().forEach(t -> {
             Envelope2D regionExtents = new Envelope2D();
             t.getRegion().queryEnvelope2D(regionExtents);
 
