@@ -1,6 +1,5 @@
 package us.dustinj.timezonemap.builder;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -9,6 +8,7 @@ import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
@@ -27,11 +27,22 @@ import org.geojson.Polygon;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+import us.dustinj.timezonemap.serialization.Envelope;
 import us.dustinj.timezonemap.serialization.LatLon;
 import us.dustinj.timezonemap.serialization.Serialization;
 import us.dustinj.timezonemap.serialization.TimeZone;
 
 public class Main {
+
+    private static class Pair<X, Y> {
+        final X x;
+        final Y y;
+
+        private Pair(X x, Y y) {
+            this.x = x;
+            this.y = y;
+        }
+    }
 
     private static InputStream createInputStream(String argument) throws IOException {
         if (Files.exists(Paths.get(argument))) {
@@ -49,7 +60,23 @@ public class Main {
                 .collect(Collectors.toList());
     }
 
-    private static ByteBuffer convertFeature(Feature feature) {
+    private static Envelope getBoundingBox(TimeZone timeZone) {
+        float[] floats = new float[] { Float.MAX_VALUE, Float.MAX_VALUE, -Float.MAX_VALUE, -Float.MAX_VALUE };
+
+        timeZone.getRegions().stream()
+                .flatMap(Collection::stream)
+                .flatMap(Collection::stream)
+                .forEach(location -> {
+                    floats[0] = Math.min(floats[0], location.getLatitude());
+                    floats[1] = Math.min(floats[1], location.getLongitude());
+                    floats[2] = Math.max(floats[2], location.getLatitude());
+                    floats[3] = Math.max(floats[3], location.getLongitude());
+                });
+
+        return new Envelope(new LatLon(floats[0], floats[1]), new LatLon(floats[2], floats[3]));
+    }
+
+    private static TimeZone convertFeatureToTimeZone(Feature feature) {
         String timeZoneId = feature.getProperties().get("tzid").toString();
         List<List<List<LatLon>>> regions;
 
@@ -67,35 +94,38 @@ public class Main {
             throw new RuntimeException("Geometries of type " + geometry.getClass() + " are not supported");
         }
 
-        return Serialization.serialize(new TimeZone(timeZoneId, regions));
+        return new TimeZone(timeZoneId, regions);
     }
 
     private static void build(String argument, String outputPath) throws IOException {
         try (ZipInputStream zipInputStream = new ZipInputStream(createInputStream(argument))) {
             zipInputStream.getNextEntry();
             FeatureCollection featureCollection = new ObjectMapper().readValue(zipInputStream, FeatureCollection.class);
-            Iterator<ByteBuffer> serializedTimeZones = featureCollection.getFeatures().stream()
-                    .map(Main::convertFeature)
+            Iterator<Pair<String, ByteBuffer>> serializedTimeZones = featureCollection.getFeatures().stream()
+                    .map(Main::convertFeatureToTimeZone)
+                    .map(t -> new Pair<>(getBoundingBox(t), t))
+                    .map(p -> new Pair<>(Serialization.serializeEnvelope(p.x), Serialization.serializeTimeZone(p.y)))
                     .iterator();
 
             writeZTar(outputPath, serializedTimeZones);
         }
     }
 
-    private static void writeZTar(String outputPath, Iterator<ByteBuffer> serializedTimeZones) throws IOException {
+    private static void writeZTar(String outputPath, Iterator<Pair<String, ByteBuffer>> serializedTimeZones)
+            throws IOException {
         Files.createDirectories(Paths.get(outputPath).getParent());
 
         try (TarArchiveOutputStream out =
                 new TarArchiveOutputStream(new ZstdCompressorOutputStream(new FileOutputStream(outputPath), 25))) {
-            int count = 0;
             while (serializedTimeZones.hasNext()) {
-                ByteBuffer serializedTimeZone = serializedTimeZones.next();
-                TarArchiveEntry entry = new TarArchiveEntry(Integer.toString(count++));
+                Pair<String, ByteBuffer> pair = serializedTimeZones.next();
+                String filename = pair.x;
+                ByteBuffer serializedTimeZone = pair.y;
+                TarArchiveEntry entry = new TarArchiveEntry(filename);
 
                 entry.setSize(serializedTimeZone.remaining());
                 out.putArchiveEntry(entry);
-                out.write(serializedTimeZone.array(), serializedTimeZone.position(),
-                        serializedTimeZone.remaining());
+                out.write(serializedTimeZone.array(), serializedTimeZone.position(), serializedTimeZone.remaining());
                 out.closeArchiveEntry();
             }
         }
@@ -104,7 +134,7 @@ public class Main {
     public static void main(String[] args) throws IOException {
         build(args[0], args[1]);
 
-        // build("C:\\Users\\Dustin\\gitroot\\timezonemap\\timezones-with-oceans.geojson.zip",
-        //         "C:\\Users\\Dustin\\gitroot\\timezonemap\\float.tar");
+        // build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip",
+        //        "C:\\Users\\Dustin\\gitroot\\timezonemap\\float.tar");
     }
 }

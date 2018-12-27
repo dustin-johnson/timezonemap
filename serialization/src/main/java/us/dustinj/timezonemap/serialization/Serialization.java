@@ -55,7 +55,21 @@ public final class Serialization {
         return convertedRings;
     }
 
-    public static ByteBuffer serialize(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
+    public static String serializeEnvelope(Envelope envelope) {
+        return String.format("%f,%f,%f,%f",
+                envelope.getLowerLeftCorner().latitude, envelope.getLowerLeftCorner().longitude,
+                envelope.getUpperRightCorner().latitude, envelope.getUpperRightCorner().longitude);
+    }
+
+    public static Envelope deserializeEnvelope(String envelope) {
+        String[] fragments = envelope.split(",");
+        return new Envelope(
+                new LatLon(Float.parseFloat(fragments[0]), Float.parseFloat(fragments[1])),
+                new LatLon(Float.parseFloat(fragments[2]), Float.parseFloat(fragments[3])));
+
+    }
+
+    public static ByteBuffer serializeTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         FlatBufferBuilder builder = new FlatBufferBuilder(
                 timeZone.getRegions().stream().mapToInt(List::size).sum() * 8 +
                         timeZone.getTimeZoneId().length() * 2 + 256);
@@ -70,7 +84,7 @@ public final class Serialization {
         return builder.dataBuffer();
     }
 
-    public static us.dustinj.timezonemap.serialization.TimeZone deserialize(ByteBuffer serializedTimeZone) {
+    public static us.dustinj.timezonemap.serialization.TimeZone deserializeTimeZone(ByteBuffer serializedTimeZone) {
         TimeZone timeZone = TimeZone.getRootAsTimeZone(serializedTimeZone);
         List<List<List<LatLon>>> regions = new ArrayList<>();
 
