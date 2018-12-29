@@ -35,12 +35,12 @@ import us.dustinj.timezonemap.serialization.TimeZone;
 public class Main {
 
     private static class Pair<X, Y> {
-        final X x;
-        final Y y;
+        final X first;
+        final Y second;
 
-        private Pair(X x, Y y) {
-            this.x = x;
-            this.y = y;
+        private Pair(X first, Y second) {
+            this.first = first;
+            this.second = second;
         }
     }
 
@@ -104,7 +104,7 @@ public class Main {
             Iterator<Pair<String, ByteBuffer>> serializedTimeZones = featureCollection.getFeatures().stream()
                     .map(Main::convertFeatureToTimeZone)
                     .map(t -> new Pair<>(getBoundingBox(t), t))
-                    .map(p -> new Pair<>(Serialization.serializeEnvelope(p.x), Serialization.serializeTimeZone(p.y)))
+                    .map(p -> new Pair<>(Serialization.serializeEnvelope(p.first), Serialization.serializeTimeZone(p.second)))
                     .iterator();
 
             writeZTar(outputPath, serializedTimeZones);
@@ -119,8 +119,8 @@ public class Main {
                 new TarArchiveOutputStream(new ZstdCompressorOutputStream(new FileOutputStream(outputPath), 25))) {
             while (serializedTimeZones.hasNext()) {
                 Pair<String, ByteBuffer> pair = serializedTimeZones.next();
-                String filename = pair.x;
-                ByteBuffer serializedTimeZone = pair.y;
+                String filename = pair.first;
+                ByteBuffer serializedTimeZone = pair.second;
                 TarArchiveEntry entry = new TarArchiveEntry(filename);
 
                 entry.setSize(serializedTimeZone.remaining());
