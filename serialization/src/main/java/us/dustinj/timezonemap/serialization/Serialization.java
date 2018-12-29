@@ -23,7 +23,7 @@ public final class Serialization {
         Collections.reverse(reversedList);
 
         Ring.startPointsVector(builder, reversedList.size());
-        reversedList.forEach(point -> Point.createPoint(builder, point.latitude, point.longitude));
+        reversedList.forEach(point -> Point.createPoint(builder, point.getLatitude(), point.getLongitude()));
 
         return Ring.createRing(builder, builder.endVector());
     }
