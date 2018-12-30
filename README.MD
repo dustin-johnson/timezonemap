@@ -10,12 +10,12 @@ which is derived from [OpenStreetMap](https://www.openstreetmap.org/) data. The 
 comes from [Timeshape](https://github.com/RomanIakovlev/timeshape).
 
 This library seeks to:
-* Be as fast and small as possible, with minimal dependencies, so it's appropriate for mobile.
+* Present a clean and simple API.
+* Be as fast and small as possible, with minimal dependencies, lending itself well to mobile applications.
 * Expose the region covered by each time zone to enable custom logic.
 * Handle overlapping time zones deterministically.
-* Present a clean and simple API.
-* Conserve memory by not loading regions that are not needed.
-* Avoid dependencies on Java 8s time library, mostly for mobile.
+* Conserve memory by not loading regions that are unnecessary.
+* Avoid dependencies on Java 8's time library, for mobile as well as legacy applications.
 
 ## Examples
 ```java

@@ -4,10 +4,11 @@ import org.junit.Test;
 
 import nl.jqno.equalsverifier.EqualsVerifier;
 
-public class TimeZoneTest {
+public class EnvelopeTest {
 
     @Test
     public void equalsContract() {
-        EqualsVerifier.forClass(TimeZone.class).verify();
+        EqualsVerifier.forClass(Envelope.class).verify();
     }
+
 }
