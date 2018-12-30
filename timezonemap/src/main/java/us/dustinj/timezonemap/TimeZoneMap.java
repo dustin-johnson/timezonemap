@@ -34,11 +34,11 @@ import us.dustinj.timezonemap.serialization.Serialization;
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
     private final List<TimeZone> timeZones;
-    private final Envelope2D initializedArea;
+    private final Envelope2D initializedRegion;
 
-    private TimeZoneMap(List<TimeZone> timeZones, Envelope2D initializedArea) {
+    private TimeZoneMap(List<TimeZone> timeZones, Envelope2D initializedRegion) {
         this.timeZones = timeZones;
-        this.initializedArea = initializedArea;
+        this.initializedRegion = initializedRegion;
     }
 
     /**
@@ -84,11 +84,8 @@ public final class TimeZoneMap {
         Util.precondition(minDegreesLongitude < maxDegreesLongitude,
                 "Minimum longitude must be less than maximum longitude");
 
-        Envelope2D indexAreaEnvelope = new Envelope2D(
-                Math.nextDown(minDegreesLongitude),
-                Math.nextDown(minDegreesLatitude),
-                Math.nextUp(maxDegreesLongitude),
-                Math.nextUp(maxDegreesLatitude));
+        Envelope2D indexAreaEnvelope = new Envelope2D(minDegreesLongitude, minDegreesLatitude,
+                maxDegreesLongitude, maxDegreesLatitude);
         Polygon indexAreaPolygon = envelopeToPolygon(indexAreaEnvelope);
 
         try (InputStream inputStream = DataLocator.getDataInputStream();
@@ -170,6 +167,17 @@ public final class TimeZoneMap {
     }
 
     /**
+     * Get the region (inclusive of the boundary) for which this map was initialized. Only locations with in this region
+     * may be queried using this map instance.
+     *
+     * @return The region (inclusive of the boundary) for which this map was initialized. Only locations with in this
+     *         region may be queried using this map instance.
+     */
+    public Envelope2D getInitializedRegion() {
+        return this.initializedRegion;
+    }
+
+    /**
      * A list of all time zone identifiers, and their regions, contained in this index. The list is sorted by the area
      * the time zone covers, smallest first. Note, the area computation used for sorting considers the real-world area
      * the time zone covers regardless of the region the index was initialized for. If this index was initialized using
@@ -238,7 +246,7 @@ public final class TimeZoneMap {
     private Stream<TimeZone> getOverlappingTimeZoneStream(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
-        Util.precondition(this.initializedArea.containsExclusive(point.getXY()),
+        Util.precondition(this.initializedRegion.contains(point.getXY()),
                 "Requested point is outside the initialized area");
 
         return this.timeZones.stream()

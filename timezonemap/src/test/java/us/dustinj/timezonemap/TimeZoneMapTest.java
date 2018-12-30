@@ -167,20 +167,29 @@ public class TimeZoneMapTest {
     }
 
     @Test
+    public void getInitializedRegion() {
+        // Small stripe horizontally across the USA
+        Envelope2D envelope = new Envelope2D(-123.283836, 40.169102, -77.030765, 40.169103);
+        TimeZoneMap map = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
+
+        assertThat(map.getInitializedRegion()).isEqualTo(envelope);
+    }
+
+    @Test
     public void testKnownZones() {
         assertThat(EVERYWHERE.getTimeZones().size()).isGreaterThan(400);
 
         // Small stripe horizontally across the USA
         Envelope2D envelope = new Envelope2D(-123.283836, 40.169102, -77.030765, 40.169103);
-        TimeZoneMap scopedEngine = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
+        TimeZoneMap map = TimeZoneMap.forRegion(envelope.ymin, envelope.xmin, envelope.ymax, envelope.xmax);
 
         // Accurate results, sorted by land area (smallest first)
-        assertThat(scopedEngine.getTimeZones().stream().map(TimeZone::getZoneId))
+        assertThat(map.getTimeZones().stream().map(TimeZone::getZoneId))
                 .contains("America/Indiana/Indianapolis", "America/Los_Angeles",
                         "America/New_York", "America/Denver", "America/Chicago");
 
         envelope.inflate(1E-10, 1E-10); // Inflate the envelope just slightly to avoid precision errors.
-        scopedEngine.getTimeZones().forEach(t -> {
+        map.getTimeZones().forEach(t -> {
             Envelope2D regionExtents = new Envelope2D();
             t.getRegion().queryEnvelope2D(regionExtents);
 
@@ -194,17 +203,13 @@ public class TimeZoneMapTest {
     public void readmeExample() {
         // Initialize of a region that spans from Germany to Bulgaria.
         // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
-        TimeZoneMap scopedMap = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
+        TimeZoneMap map = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
 
-        String berlin =
-                scopedMap.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
-        String prague =
-                scopedMap.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
-        String budapest =
-                scopedMap.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
-        String milan =
-                scopedMap.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
-        String adriaticSea = scopedMap.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
+        String berlin = map.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
+        String prague = map.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
+        String budapest = map.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
+        String milan = map.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
+        String adriaticSea = map.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
 
         // --------------------
 
@@ -225,67 +230,67 @@ public class TimeZoneMapTest {
     public void distanceFromBoundary() {
         // GMT+5 on the left side of Jamaica such that the left side of the below region in in GMT+5, but the right
         // side is excerpted due to Jamaica.
-        TimeZoneMap scoped = TimeZoneMap.forRegion(
+        TimeZoneMap map = TimeZoneMap.forRegion(
                 17.361963, -79.670415,
                 19.085664, -77.747903);
 
         // Right next to the boundary's edge to show that the time zone distance is clipped by the map index region.
-        assertThat(scoped.getOverlappingTimeZone(18, -79.67).get().getDistanceFromBoundary(18, -79.67))
+        assertThat(map.getOverlappingTimeZone(18, -79.67).get().getDistanceFromBoundary(18, -79.67))
                 .isCloseTo(44, byLessThan(0.1));
 
         // Next to the hole created by Jamaica to ensure we deal with the hole correctly. Use a loose tolerance
         // because we don't care about subtle changes in the position of the Jamaica region, just that it exists.
-        assertThat(scoped.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
+        assertThat(map.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
                 .isCloseTo(1418, byLessThan(1_000.0));
     }
 
     @Test
     public void scopedRegionTest_Africa_Rectangular() {
-        TimeZoneMap scoped = TimeZoneMap.forRegion(
+        TimeZoneMap map = TimeZoneMap.forRegion(
                 3.97131, 22.78090,
                 10.29621, 28.10539);
 
-        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(Math.nextUp(10.29621), 22.78090))
+        assertThatThrownBy(() -> map.getOverlappingTimeZone(Math.nextUp(10.29621), 22.78090))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(10.29621, Math.nextDown(22.78090)))
+        assertThatThrownBy(() -> map.getOverlappingTimeZone(10.29621, Math.nextDown(22.78090)))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(Math.nextDown(3.97131), 28.10539))
+        assertThatThrownBy(() -> map.getOverlappingTimeZone(Math.nextDown(3.97131), 28.10539))
                 .isInstanceOf(IllegalArgumentException.class);
-        assertThatThrownBy(() -> scoped.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
+        assertThatThrownBy(() -> map.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(scoped.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
                 .contains("Africa/Bangui"); // Upper left corner
-        assertThat(scoped.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
                 .contains("Africa/Lubumbashi"); // Lower right corner
 
         // Check a few interesting places in this oddly time zoned region
-        assertThat(scoped.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
                 .contains("Africa/Khartoum");
-        assertThat(scoped.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
                 .contains("Africa/Juba");
-        assertThat(scoped.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
                 .contains("Africa/Khartoum");
-        assertThat(scoped.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
                 .contains("Africa/Bangui");
     }
 
     @Test
     public void scopedRegionTest_USA_Line() {
         // Small stripe horizontally across the USA
-        TimeZoneMap scoped = TimeZoneMap.forRegion(
+        TimeZoneMap map = TimeZoneMap.forRegion(
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
-        assertThat(scoped.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
                 .contains("America/Los_Angeles");
-        assertThat(scoped.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
                 .contains("America/Denver");
-        assertThat(scoped.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
                 .contains("America/Chicago");
-        assertThat(scoped.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
                 .contains("America/Indiana/Indianapolis");
-        assertThat(scoped.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
+        assertThat(map.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
                 .contains("America/New_York");
     }
 

@@ -23,13 +23,13 @@ import us.dustinj.timezonemap.TimeZoneMap;
 
 // Initialize of a region that spans from Germany to Bulgaria.
 // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
-TimeZoneMap scopedMap = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
+TimeZoneMap map = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
 
-String berlin = scopedMap.getTimeZoneId(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
-String prague = scopedMap.getTimeZoneId(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
-String budapest = scopedMap.getTimeZoneId(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
-String milan = scopedMap.getTimeZoneId(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
-String adriaticSea = scopedMap.getTimeZoneId(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
+String berlin = map.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
+String prague = map.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
+String budapest = map.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
+String milan = map.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
+String adriaticSea = map.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
 ```
 
 If you're on Java 8 or above, you can convert the returned time zone into a proper `java.util.TimeZone`:
