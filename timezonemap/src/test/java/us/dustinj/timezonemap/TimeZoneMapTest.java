@@ -12,6 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.geojson.Feature;
@@ -23,8 +24,12 @@ import org.junit.Test;
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.GeometryException;
+import com.esri.core.geometry.OperatorSimplify;
+import com.esri.core.geometry.Polygon;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimaps;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class TimeZoneMapTest {
@@ -141,13 +146,24 @@ public class TimeZoneMapTest {
     @Test
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
-        for (TimeZone timeZone : EVERYWHERE.getTimeZones()) {
+        ImmutableListMultimap<String, TimeZone> timeZones =
+                Multimaps.index(EVERYWHERE.getTimeZones(), TimeZone::getZoneId);
+        List<TimeZone> renamedTimeZones = timeZones.asMap().entrySet().stream()
+                .flatMap(e -> IntStream.range(0, e.getValue().size())
+                        .mapToObj(i -> new TimeZone(e.getKey() + "_" + i,
+                                ((List<TimeZone>) e.getValue()).get(i).getRegion())))
+                .map(t -> new TimeZone(t.getZoneId(), (Polygon)
+                        OperatorSimplify.local().execute(t.getRegion(), Util.SPATIAL_REFERENCE,
+                                true, null)))
+                .collect(Collectors.toList());
+
+        for (TimeZone timeZone : renamedTimeZones) {
             outputJson(timeZone);
         }
 
         // Build a world.json
         FeatureCollection featureCollection = new FeatureCollection();
-        featureCollection.setFeatures(EVERYWHERE.getTimeZones().stream()
+        featureCollection.setFeatures(renamedTimeZones.stream()
                 .map(TimeZone::getRegion)
                 .map(GeometryEngine::geometryToGeoJson)
                 .map(jsonString -> {
