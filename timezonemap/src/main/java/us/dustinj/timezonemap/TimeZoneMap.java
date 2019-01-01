@@ -15,9 +15,13 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
 
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
+import org.apache.commons.compress.archivers.sevenz.SevenZFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+import org.apache.commons.compress.utils.IOUtils;
+import org.apache.commons.compress.utils.SeekableInMemoryByteChannel;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
@@ -89,10 +93,10 @@ public final class TimeZoneMap {
         Polygon indexAreaPolygon = envelopeToPolygon(indexAreaEnvelope);
 
         try (InputStream inputStream = DataLocator.getDataInputStream();
-                TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(
-                        new ZstdCompressorInputStream(inputStream))) {
+                SevenZFile archive = new SevenZFile(new SeekableInMemoryByteChannel
+                        (IOUtils.toByteArray(inputStream)))) {
 
-            List<TimeZone> timeZones = getTarEntryStream(archiveInputStream)
+            List<TimeZone> timeZones = get7zipEntryStream(archive)
                     // The name of each file is an envelope that is the outside boundary of the time zone. This
                     // allows us to immediately filter out any time zones that don't overlap the initialization
                     // region without having to deserialize the region, which is a fairly expensive operation.
@@ -110,7 +114,7 @@ public final class TimeZoneMap {
                             ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[(int) n.getSize()]);
                             int readLength;
 
-                            while ((readLength = archiveInputStream.read(byteBuffer.array(),
+                            while ((readLength = archive.read(byteBuffer.array(),
                                     byteBuffer.position(), byteBuffer.remaining())) != -1) {
                                 byteBuffer.position(byteBuffer.position() + readLength);
                             }
@@ -272,6 +276,28 @@ public final class TimeZoneMap {
                     public boolean tryAdvance(Consumer<? super TarArchiveEntry> action) {
                         try {
                             TarArchiveEntry entry = f.getNextTarEntry();
+                            if (entry != null) {
+                                action.accept(entry);
+                                return true;
+                            } else {
+                                return false;
+                            }
+                        } catch (IOException e) {
+                            throw new IllegalStateException("Unable to read time zone data resource file", e);
+                        }
+                    }
+                };
+
+        return StreamSupport.stream(spliterator, false);
+    }
+
+    private static Stream<SevenZArchiveEntry> get7zipEntryStream(SevenZFile f) {
+        Spliterator<SevenZArchiveEntry> spliterator =
+                new Spliterators.AbstractSpliterator<SevenZArchiveEntry>(Long.MAX_VALUE, 0) {
+                    @Override
+                    public boolean tryAdvance(Consumer<? super SevenZArchiveEntry> action) {
+                        try {
+                            SevenZArchiveEntry entry = f.getNextEntry();
                             if (entry != null) {
                                 action.accept(entry);
                                 return true;

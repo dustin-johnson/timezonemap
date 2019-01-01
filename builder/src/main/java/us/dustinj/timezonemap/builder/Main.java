@@ -1,5 +1,6 @@
 package us.dustinj.timezonemap.builder;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -18,6 +19,9 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.zip.ZipInputStream;
 
+import org.apache.commons.compress.archivers.sevenz.SevenZArchiveEntry;
+import org.apache.commons.compress.archivers.sevenz.SevenZMethod;
+import org.apache.commons.compress.archivers.sevenz.SevenZOutputFile;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorOutputStream;
@@ -158,7 +162,7 @@ public class Main {
                     .collect(Collectors.toList())
                     .iterator();
 
-            writeZTar(outputPath, serializedTimeZones);
+            write7z(outputPath, serializedTimeZones);
         }
     }
 
@@ -175,6 +179,27 @@ public class Main {
                 TarArchiveEntry entry = new TarArchiveEntry(filename);
 
                 entry.setSize(serializedTimeZone.remaining());
+                out.putArchiveEntry(entry);
+                out.write(serializedTimeZone.array(), serializedTimeZone.position(), serializedTimeZone.remaining());
+                out.closeArchiveEntry();
+            }
+        }
+    }
+
+    private static void write7z(String outputPath, Iterator<Pair<String, ByteBuffer>> serializedTimeZones)
+            throws IOException {
+        Files.createDirectories(Paths.get(outputPath).getParent());
+
+        try (SevenZOutputFile out = new SevenZOutputFile(new File(outputPath))) {
+            out.setContentCompression(SevenZMethod.COPY);
+            while (serializedTimeZones.hasNext()) {
+                Pair<String, ByteBuffer> pair = serializedTimeZones.next();
+                String filename = pair.first;
+                ByteBuffer serializedTimeZone = pair.second;
+                SevenZArchiveEntry entry = new SevenZArchiveEntry();
+
+                entry.setSize(serializedTimeZone.remaining());
+                entry.setName(filename);
                 out.putArchiveEntry(entry);
                 out.write(serializedTimeZone.array(), serializedTimeZone.position(), serializedTimeZone.remaining());
                 out.closeArchiveEntry();
