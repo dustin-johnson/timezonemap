@@ -124,7 +124,7 @@ public final class TimeZoneMap {
                             throw new IllegalStateException("Unable to load time zone file " + n.getName(), e);
                         }
                     })
-                    .map(Serialization::deserializeTimeZone)
+                    .map(b -> Serialization.deserializeTimeZone(b, 1_000_000))
                     .map(Util::convertToEsriBackedTimeZone)
                     .map(timeZone -> {
                         Envelope2D extents = new Envelope2D();

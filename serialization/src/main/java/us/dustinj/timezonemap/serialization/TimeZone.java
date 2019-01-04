@@ -2,6 +2,7 @@ package us.dustinj.timezonemap.serialization;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 public final class TimeZone {
     private final String timeZoneId;

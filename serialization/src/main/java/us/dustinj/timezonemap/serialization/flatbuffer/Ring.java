@@ -14,20 +14,16 @@ public final class Ring extends Table {
   public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; }
   public Ring __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public Point points(int j) { return points(new Point(), j); }
-  public Point points(Point obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o) + j * 8, bb) : null; }
-  public int pointsLength() { int o = __offset(4); return o != 0 ? __vector_len(o) : 0; }
+  public AnchorPoint firstPoint() { return firstPoint(new AnchorPoint()); }
+  public AnchorPoint firstPoint(AnchorPoint obj) { int o = __offset(4); return o != 0 ? obj.__assign(o + bb_pos, bb) : null; }
+  public DeltaPoint subsequentPoints(int j) { return subsequentPoints(new DeltaPoint(), j); }
+  public DeltaPoint subsequentPoints(DeltaPoint obj, int j) { int o = __offset(6); return o != 0 ? obj.__assign(__vector(o) + j * 8, bb) : null; }
+  public int subsequentPointsLength() { int o = __offset(6); return o != 0 ? __vector_len(o) : 0; }
 
-  public static int createRing(FlatBufferBuilder builder,
-      int pointsOffset) {
-    builder.startObject(1);
-    Ring.addPoints(builder, pointsOffset);
-    return Ring.endRing(builder);
-  }
-
-  public static void startRing(FlatBufferBuilder builder) { builder.startObject(1); }
-  public static void addPoints(FlatBufferBuilder builder, int pointsOffset) { builder.addOffset(0, pointsOffset, 0); }
-  public static void startPointsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(8, numElems, 4); }
+  public static void startRing(FlatBufferBuilder builder) { builder.startObject(2); }
+  public static void addFirstPoint(FlatBufferBuilder builder, int firstPointOffset) { builder.addStruct(0, firstPointOffset, 0); }
+  public static void addSubsequentPoints(FlatBufferBuilder builder, int subsequentPointsOffset) { builder.addOffset(1, subsequentPointsOffset, 0); }
+  public static void startSubsequentPointsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(8, numElems, 4); }
   public static int endRing(FlatBufferBuilder builder) {
     int o = builder.endObject();
     return o;

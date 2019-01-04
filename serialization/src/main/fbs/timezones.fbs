@@ -10,12 +10,18 @@ table Polygon {
 }
 
 table Ring {
-    points:[Point];
+    firstPoint: AnchorPoint;
+    subsequentPoints:[DeltaPoint];
 }
 
-struct Point {
-    latitude:float;
-    longitude:float;
+struct AnchorPoint {
+    latitude:int32;
+    longitude:int32;
+}
+
+struct DeltaPoint {
+    latitude:int32;
+    longitude:int32;
 }
 
 root_type TimeZone;

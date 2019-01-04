@@ -3,19 +3,19 @@ package us.dustinj.timezonemap.serialization;
 import java.util.Objects;
 
 public final class LatLon {
-    private final float latitude;
-    private final float longitude;
+    private final double latitude;
+    private final double longitude;
 
-    public LatLon(float latitude, float longitude) {
+    public LatLon(double latitude, double longitude) {
         this.latitude = latitude;
         this.longitude = longitude;
     }
 
-    public float getLatitude() {
+    public double getLatitude() {
         return latitude;
     }
 
-    public float getLongitude() {
+    public double getLongitude() {
         return longitude;
     }
 
@@ -24,8 +24,8 @@ public final class LatLon {
         if (this == o) { return true; }
         if (o == null || getClass() != o.getClass()) { return false; }
         LatLon latLon = (LatLon) o;
-        return Float.compare(latLon.getLatitude(), getLatitude()) == 0 &&
-                Float.compare(latLon.getLongitude(), getLongitude()) == 0;
+        return Double.compare(latLon.getLatitude(), getLatitude()) == 0 &&
+                Double.compare(latLon.getLongitude(), getLongitude()) == 0;
     }
 
     @Override
