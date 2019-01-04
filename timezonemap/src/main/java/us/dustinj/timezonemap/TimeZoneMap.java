@@ -97,7 +97,9 @@ public final class TimeZoneMap {
                     // allows us to immediately filter out any time zones that don't overlap the initialization
                     // region without having to deserialize the region, which is a fairly expensive operation.
                     .filter(entry -> {
-                        Envelope envelope = Serialization.deserializeEnvelope(entry.getName());
+                        String[] fragmentedName = entry.getName().split("/");
+                        String serializedEnvelope = fragmentedName[fragmentedName.length - 1];
+                        Envelope envelope = Serialization.deserializeEnvelope(serializedEnvelope);
 
                         return indexAreaEnvelope.isIntersecting(
                                 envelope.getLowerLeftCorner().getLongitude(),

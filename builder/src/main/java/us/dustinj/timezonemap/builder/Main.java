@@ -153,16 +153,17 @@ public class Main {
                             .findFirst()
                             .isPresent())
                     .map(t -> new Pair<>(getBoundingBox(t), t))
-                    .map(p -> new Pair<>(Serialization.serializeEnvelope(p.first),
+                    .map(p -> new Pair<>(
+                            p.second.getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.first),
                             Serialization.serializeTimeZone(p.second)))
                     .collect(Collectors.toList())
                     .iterator();
 
-            writeZTar(outputPath, serializedTimeZones);
+            writeMapArchive(outputPath, serializedTimeZones);
         }
     }
 
-    private static void writeZTar(String outputPath, Iterator<Pair<String, ByteBuffer>> serializedTimeZones)
+    private static void writeMapArchive(String outputPath, Iterator<Pair<String, ByteBuffer>> serializedTimeZones)
             throws IOException {
         Files.createDirectories(Paths.get(outputPath).getParent());
 
