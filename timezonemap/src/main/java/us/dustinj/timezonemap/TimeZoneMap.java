@@ -53,12 +53,30 @@ public final class TimeZoneMap {
     }
 
     /**
+     * Gets a map for the specified bounding box using the default map data. See
+     * {@link #forRegion(InputStream, double, double, double, double) the overload} for more information.
+     * @see #forRegion(InputStream, double, double, double, double)
+     */
+    public static TimeZoneMap forRegion(double minDegreesLatitude, double minDegreesLongitude,
+            double maxDegreesLatitude, double maxDegreesLongitude) {
+        try (InputStream inputStream = DataLocator.getDataInputStream()) {
+            return forRegion(inputStream, minDegreesLatitude, minDegreesLongitude, maxDegreesLatitude,
+                    maxDegreesLongitude);
+        } catch (IOException e) {
+            throw new IllegalStateException("Unable to read time zone data resource file", e);
+        }
+    }
+
+    /**
      * Creates a new instance of {@link TimeZoneMap} and initializes it to be valid for anywhere within the provided
      * coordinates (inclusive). This is a blocking long-running operation that can be very quick depending on the area
      * described by the provided coordinates. Initializing the map this way not only improves speed, but also reduces
      * memory usage, as only the regions withing the provided coordinates are held in memory. Large time zone regions
      * are clipped so that only the pieces within the provided coordinates are kept in memory.
      *
+     * @param tarInputStream
+     *         A stream containing the tar archive. Any compression or other packaging must have already been unwrapped
+     *         before this.
      * @param minDegreesLatitude
      *         Between -90.0 and 90.0, which are the South and North pole respectively. This value is the southern most
      *         boundary to be indexed, inclusive.
@@ -77,8 +95,8 @@ public final class TimeZoneMap {
      * @throws IllegalArgumentException
      *         If minimum values aren't less than maximum values.
      */
-    public static TimeZoneMap forRegion(double minDegreesLatitude, double minDegreesLongitude,
-            double maxDegreesLatitude, double maxDegreesLongitude) {
+    public static TimeZoneMap forRegion(InputStream tarInputStream, double minDegreesLatitude,
+            double minDegreesLongitude, double maxDegreesLatitude, double maxDegreesLongitude) {
         Util.precondition(minDegreesLatitude < maxDegreesLatitude,
                 "Minimum latitude must be less than maximum latitude");
         Util.precondition(minDegreesLongitude < maxDegreesLongitude,
@@ -88,9 +106,7 @@ public final class TimeZoneMap {
                 maxDegreesLongitude, maxDegreesLatitude);
         Polygon indexAreaPolygon = envelopeToPolygon(indexAreaEnvelope);
 
-        try (InputStream inputStream = DataLocator.getDataInputStream();
-                TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(
-                        new ZstdCompressorInputStream(inputStream))) {
+        try (TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(tarInputStream)) {
 
             List<TimeZone> timeZones = getTarEntryStream(archiveInputStream)
                     // The name of each file is an envelope that is the outside boundary of the time zone. This

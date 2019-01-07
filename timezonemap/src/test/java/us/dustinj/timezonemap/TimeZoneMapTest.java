@@ -87,8 +87,6 @@ public class TimeZoneMapTest {
                 new Location(21.58224, 39.16403, "Asia/Riyadh", "Jeddah, Saudi Arabia"),
                 new Location(42.534980, 87.615030, "Asia/Urumqi", "Asia/Shanghai",
                         "Xinjiang, China - Two time zones, Shanghai is much larger and thus should be 2nd"),
-                new Location(10.926176, 114.072017, "Asia/Ho_Chi_Minh", "Asia/Shanghai",
-                        "South China Sea - Two time zones due this being a highly disputed area"),
                 new Location(-54.80693, -68.30734, "America/Argentina/Ushuaia", "Ushuaia, Argentina"),
                 new Location(-54.93413, -67.61091, "America/Punta_Arenas", "Puerto Williams, Chile"),
                 new Location(-70.91694, 54.67198, "Antarctica/Syowa", "Antarctica"),

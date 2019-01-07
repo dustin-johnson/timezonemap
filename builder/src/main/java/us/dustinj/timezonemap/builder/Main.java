@@ -4,6 +4,7 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
@@ -47,6 +48,10 @@ public class Main {
             this.first = first;
             this.second = second;
         }
+    }
+
+    private interface UnaryIoOperator<T> {
+        T apply(T t) throws IOException;
     }
 
     private static InputStream createInputStream(String argument) throws IOException {
@@ -139,7 +144,8 @@ public class Main {
         // return Stream.of(new TimeZone("Consolidated_" + timeZoneId, regions.collect(Collectors.toList())));
     }
 
-    private static void build(String argument, String outputPath) throws IOException {
+    private static void build(UnaryIoOperator<OutputStream> compressionProvider, String argument, String outputPath)
+            throws IOException {
         try (ZipInputStream zipInputStream = new ZipInputStream(createInputStream(argument))) {
             zipInputStream.getNextEntry();
             FeatureCollection featureCollection = new ObjectMapper().readValue(zipInputStream, FeatureCollection.class);
@@ -156,19 +162,18 @@ public class Main {
                     .map(p -> new Pair<>(
                             p.second.getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.first),
                             Serialization.serializeTimeZone(p.second)))
-                    .collect(Collectors.toList())
                     .iterator();
 
-            writeMapArchive(outputPath, serializedTimeZones);
+            writeMapArchive(compressionProvider, outputPath, serializedTimeZones);
         }
     }
 
-    private static void writeMapArchive(String outputPath, Iterator<Pair<String, ByteBuffer>> serializedTimeZones)
-            throws IOException {
+    private static void writeMapArchive(UnaryIoOperator<OutputStream> compressionProvider, String outputPath,
+            Iterator<Pair<String, ByteBuffer>> serializedTimeZones) throws IOException {
         Files.createDirectories(Paths.get(outputPath).getParent());
 
         try (TarArchiveOutputStream out =
-                new TarArchiveOutputStream(new ZstdCompressorOutputStream(new FileOutputStream(outputPath), 25))) {
+                new TarArchiveOutputStream(compressionProvider.apply(new FileOutputStream(outputPath)))) {
             while (serializedTimeZones.hasNext()) {
                 Pair<String, ByteBuffer> pair = serializedTimeZones.next();
                 String filename = pair.first;
@@ -185,9 +190,9 @@ public class Main {
 
     public static void main(String[] args) throws IOException {
         if (args.length == 2) {
-            build(args[0], args[1]);
+            build(ZstdCompressorOutputStream::new, args[0], args[1]);
         } else {
-            build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip",
+            build(stream -> stream, "C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip",
                     "C:\\Users\\Dustin\\gitroot\\timezonemap\\float.tar");
         }
     }

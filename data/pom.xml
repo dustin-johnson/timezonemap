@@ -18,7 +18,6 @@
 
     <properties>
         <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
-        <map.version>2018g</map.version>
         <map.filename>timezonemap-${map.version}.tar.zstd</map.filename>
     </properties>
 
