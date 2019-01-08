@@ -17,8 +17,35 @@
     <name>Time Zone Map</name>
 
     <properties>
-        <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
+        <jacoco.minimum.covered.ratio>0.96</jacoco.minimum.covered.ratio>
     </properties>
+
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>com.internetitem</groupId>
+                <artifactId>write-properties-file-maven-plugin</artifactId>
+                <version>1.0.1</version>
+                <executions>
+                    <execution>
+                        <phase>compile</phase>
+                        <goals>
+                            <goal>write-properties-file</goal>
+                        </goals>
+                        <configuration>
+                            <filename>timezonemap.properties</filename>
+                            <properties>
+                                <property>
+                                    <name>mapVersion</name>
+                                    <value>${map.archive.version}</value>
+                                </property>
+                            </properties>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
 
     <dependencies>
         <dependency>

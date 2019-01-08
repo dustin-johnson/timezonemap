@@ -144,7 +144,7 @@ public class Main {
         // return Stream.of(new TimeZone("Consolidated_" + timeZoneId, regions.collect(Collectors.toList())));
     }
 
-    private static void build(String mapDataLocation,
+    private static void build(String mapDataLocation, String mapArchiveVersion,
             List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs) throws IOException {
         try (ZipInputStream zipInputStream = new ZipInputStream(createInputStream(mapDataLocation))) {
             zipInputStream.getNextEntry();
@@ -163,6 +163,7 @@ public class Main {
                             p.second.getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.first),
                             Serialization.serializeTimeZone(p.second)))
                     .collect(Collectors.toList());
+            serializedTimeZones.add(0, new Pair<>(mapArchiveVersion, ByteBuffer.allocate(0)));
 
             for (Pair<UnaryIoOperator<OutputStream>, Path> compressionAndOutputPath : compressionAndOutputPathPairs) {
                 writeMapArchive(compressionAndOutputPath.first, compressionAndOutputPath.second, serializedTimeZones);
@@ -192,18 +193,19 @@ public class Main {
     public static void main(String[] args) throws IOException {
         UnaryIoOperator<OutputStream> zstd = stream -> new ZstdCompressorOutputStream(stream, 22);
 
-        if (args.length >= 3) {
+        if (args.length >= 4) {
             List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs = new ArrayList<>();
-            for (int i = 2; i < args.length; i += 2) {
+            for (int i = 3; i < args.length; i += 2) {
                 UnaryIoOperator<OutputStream> compression = args[i - 1].equals("zstd") ? zstd : stream -> stream;
                 compressionAndOutputPathPairs.add(new Pair<>(compression, Paths.get(args[i])));
             }
 
-            build(args[0], compressionAndOutputPathPairs);
+            build(args[0], args[1], compressionAndOutputPathPairs);
         } else {
-            build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip", Arrays.asList(
-                    new Pair<>(s -> s, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar")),
-                    new Pair<>(zstd, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar.zstd"))));
+            build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip", "Version: 3.1-SNAPSHOT:2018i",
+                    Arrays.asList(
+                            new Pair<>(s -> s, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar")),
+                            new Pair<>(zstd, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar.zstd"))));
         }
     }
 }

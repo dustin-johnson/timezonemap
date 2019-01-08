@@ -45,6 +45,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <map.version>2018i</map.version>
+        <map.archive.version>${project.version}:${map.version}</map.archive.version>
 
         <zstd.version>1.3.7-3</zstd.version>
         <esri.version>2.2.2</esri.version>

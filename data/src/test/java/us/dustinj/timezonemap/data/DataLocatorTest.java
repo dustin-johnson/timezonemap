@@ -8,7 +8,6 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import org.junit.Test;
-import org.mockito.Mock;
 
 public class DataLocatorTest {
 
@@ -20,7 +19,7 @@ public class DataLocatorTest {
     @Test
     public void getMapArchiveFilename() {
         assertThat(DataLocator.getMapArchiveFilename())
-                .contains(DataLocator.getMapVersion())
+                .contains(DataLocator.getMapVersion().replace(":", "-"))
                 .endsWith(".tar.zstd");
     }
 

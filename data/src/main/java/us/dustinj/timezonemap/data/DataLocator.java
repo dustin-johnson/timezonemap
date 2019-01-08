@@ -39,7 +39,8 @@ public class DataLocator {
                 .map(String::trim)
                 .filter(line -> !line.startsWith("#"))
                 .map(line -> line.split("=", 2))
-                .map(lineFragments -> new AbstractMap.SimpleEntry<>(lineFragments[0], lineFragments[1]))
+                .map(lineFragments -> new AbstractMap.SimpleEntry<>(lineFragments[0],
+                        lineFragments[1].replace("\\", "")))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 

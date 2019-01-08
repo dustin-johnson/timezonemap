@@ -18,8 +18,8 @@
 
     <properties>
         <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
-        <map.uncompressed.filename>timezonemap-${map.version}.tar</map.uncompressed.filename>
-        <map.zstd.filename>timezonemap-${map.version}.tar.zstd</map.zstd.filename>
+        <map.uncompressed.filename>timezonemap-${project.version}-${map.version}.tar</map.uncompressed.filename>
+        <map.zstd.filename>timezonemap-${project.version}-${map.version}.tar.zstd</map.zstd.filename>
     </properties>
 
     <build>
@@ -44,11 +44,14 @@
                         <argument>-jar</argument>
                         <argument>timezonemap-builder-${project.version}.jar</argument>
                         <argument>${map.version}</argument>
+                        <argument>Version: ${map.archive.version}</argument>
                         <argument>uncompressed</argument>
                         <argument>${project.build.directory}/${map.uncompressed.filename}</argument>
                         <argument>zstd</argument>
                         <argument>${project.build.directory}/classes/${map.zstd.filename}</argument>
                     </arguments>
+                    <!-- Set on the build command line to suppress packing the map a second time -->
+                    <skip>${skipDataPackaging}</skip>
                 </configuration>
             </plugin>
             <plugin>
@@ -66,7 +69,7 @@
                             <properties>
                                 <property>
                                     <name>mapVersion</name>
-                                    <value>${map.version}</value>
+                                    <value>${map.archive.version}</value>
                                 </property>
                                 <property>
                                     <name>mapFilename</name>

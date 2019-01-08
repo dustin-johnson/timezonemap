@@ -1,15 +1,20 @@
 package us.dustinj.timezonemap;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
+import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -17,7 +22,6 @@ import java.util.stream.StreamSupport;
 
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
 
 import com.esri.core.geometry.Envelope2D;
 import com.esri.core.geometry.Geometry;
@@ -33,10 +37,12 @@ import us.dustinj.timezonemap.serialization.Serialization;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
+    private final String mapVersion;
     private final List<TimeZone> timeZones;
     private final Envelope2D initializedRegion;
 
-    private TimeZoneMap(List<TimeZone> timeZones, Envelope2D initializedRegion) {
+    private TimeZoneMap(String mapVersion, List<TimeZone> timeZones, Envelope2D initializedRegion) {
+        this.mapVersion = mapVersion;
         this.timeZones = timeZones;
         this.initializedRegion = initializedRegion;
     }
@@ -130,8 +136,18 @@ public final class TimeZoneMap {
         Polygon indexAreaPolygon = envelopeToPolygon(indexAreaEnvelope);
 
         try (TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(tarInputStream)) {
-
+            AtomicReference<String> mapVersion = new AtomicReference<>(); // Atomic due to Java's lambda limitations
             List<TimeZone> timeZones = getTarEntryStream(archiveInputStream)
+                    .peek(entry -> {
+                        if (mapVersion.get() == null && !entry.getName().endsWith(getRequiredMapVersion())) {
+                            throw new IllegalArgumentException(
+                                    "Incompatible map archive. Detected version is '" + entry.getName().split(" ")[1] +
+                                            "' required version '" + getRequiredMapVersion() + "'");
+                        }
+
+                        mapVersion.compareAndSet(null, getRequiredMapVersion());
+                    })
+                    .filter(entry -> entry.getSize() > 0)
                     // The name of each file is an envelope that is the outside boundary of the time zone. This
                     // allows us to immediately filter out any time zones that don't overlap the initialization
                     // region without having to deserialize the region, which is a fairly expensive operation.
@@ -201,7 +217,8 @@ public final class TimeZoneMap {
                     })
                     .collect(Collectors.toList());
 
-            return new TimeZoneMap(timeZones, indexAreaEnvelope);
+
+            return new TimeZoneMap(mapVersion.get(), timeZones, indexAreaEnvelope);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read time zone data resource file", e);
         }
@@ -216,6 +233,16 @@ public final class TimeZoneMap {
      */
     public Envelope2D getInitializedRegion() {
         return this.initializedRegion;
+    }
+
+    /**
+     * Get the version of the map. The version consists of two parts separated by a colon. The first part is the
+     * version of this map library, and the second part is the version of the map shapes. Example: 3.1:2018i
+     *
+     * @return The version of the map.
+     */
+    public String getMapVersion() {
+        return this.mapVersion;
     }
 
     /**
@@ -326,6 +353,22 @@ public final class TimeZoneMap {
                 };
 
         return StreamSupport.stream(spliterator, false);
+    }
+
+    private static String getRequiredMapVersion() {
+        return getProperties().get("mapVersion");
+    }
+
+    private static Map<String, String> getProperties() {
+        InputStream inputStream = TimeZoneMap.class.getResourceAsStream("/timezonemap.properties");
+
+        return new BufferedReader(new InputStreamReader(inputStream)).lines()
+                .map(String::trim)
+                .filter(line -> !line.startsWith("#"))
+                .map(line -> line.split("=", 2))
+                .map(lineFragments -> new AbstractMap.SimpleEntry<>(lineFragments[0],
+                        lineFragments[1].replace("\\", "")))
+                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
     }
 
     private static class ExtentsAndTimeZone {
