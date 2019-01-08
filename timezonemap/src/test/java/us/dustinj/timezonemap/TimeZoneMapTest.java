@@ -5,7 +5,9 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.byLessThan;
 
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -95,7 +97,8 @@ public class TimeZoneMapTest {
 
         for (Location location : locations) {
             List<String> everywhereResults =
-                    EVERYWHERE.getOverlappingTimeZones(location.latitude, location.longitude).stream()
+                    EVERYWHERE.getOverlappingTimeZones(location.latitude, location.longitude)
+                            .stream()
                             .map(TimeZone::getZoneId)
                             .collect(Collectors.toList());
             Optional<String> everywhereResult =
@@ -112,13 +115,47 @@ public class TimeZoneMapTest {
                     location.longitude - 1,
                     location.latitude + 1,
                     location.longitude + 1)
-                    .getOverlappingTimeZones(location.latitude, location.longitude).stream()
+                    .getOverlappingTimeZones(location.latitude, location.longitude)
+                    .stream()
                     .map(TimeZone::getZoneId)
                     .collect(Collectors.toList());
             assertThat(scopedResult)
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResults);
         }
+    }
+
+    @Test
+    public void forRegion_InputStream() throws IOException {
+        Location location = new Location(39.666304, -7.558607, "Europe/Lisbon", "Boarder between Spain and Portugal");
+        Path mapDirectory =
+                new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                        .toPath()                // timezonemap/timezonemap/target/test-classes
+                        .getParent()             // timezonemap/timezonemap/target
+                        .getParent()             // timezonemap/timezonemap
+                        .getParent()             // timezonemap
+                        .resolve("data/target"); // timezonemap/data/target
+        Path map = Files
+                .find(mapDirectory, 1, (path, attr) ->
+                        path.getFileName().toString().startsWith("timezonemap-") &&
+                                path.toString().endsWith(".tar"))
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("Unable to find the uncompressed map archive"));
+        InputStream mapInputStream = new FileInputStream(map.toFile());
+
+        List<String> result = TimeZoneMap.forRegion(
+                mapInputStream,
+                location.latitude - 1,
+                location.longitude - 1,
+                location.latitude + 1,
+                location.longitude + 1)
+                .getOverlappingTimeZones(location.latitude, location.longitude)
+                .stream()
+                .map(TimeZone::getZoneId)
+                .collect(Collectors.toList());
+        assertThat(result)
+                .as(location.description)
+                .isEqualTo(location.timeZoneIds);
     }
 
     @Test
@@ -144,6 +181,7 @@ public class TimeZoneMapTest {
     @Test
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
+        @SuppressWarnings("ConstantConditions")
         ImmutableListMultimap<String, TimeZone> timeZones =
                 Multimaps.index(EVERYWHERE.getTimeZones(), TimeZone::getZoneId);
         List<TimeZone> renamedTimeZones = timeZones.asMap().entrySet().stream()

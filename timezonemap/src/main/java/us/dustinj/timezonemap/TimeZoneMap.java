@@ -53,8 +53,30 @@ public final class TimeZoneMap {
     }
 
     /**
-     * Gets a map for the specified bounding box using the default map data. See
-     * {@link #forRegion(InputStream, double, double, double, double) the overload} for more information.
+     * Creates a new instance of {@link TimeZoneMap} using the default map data and initializes it to be valid for
+     * anywhere within the provided coordinates (inclusive). This is a blocking long-running operation that can be very
+     * quick depending on the area described by the provided coordinates. Initializing the map this way not only
+     * improves speed, but also reduces memory usage, as only the regions withing the provided coordinates are held in
+     * memory. Large time zone regions are clipped so that only the pieces within the provided coordinates are kept in
+     * memory.
+     *
+     * @param minDegreesLatitude
+     *         Between -90.0 and 90.0, which are the South and North pole respectively. This value is the southern most
+     *         boundary to be indexed, inclusive.
+     * @param minDegreesLongitude
+     *         Between -180.0 and 180.0, which are farthest West and East respectively. The White House of the United
+     *         States is at -77.036586 degrees longitude. This value is the western most boundary to be indexed,
+     *         inclusive.
+     * @param maxDegreesLatitude
+     *         Between -90.0 and 90.0, which are the South and North pole respectively. This value is the northern most
+     *         boundary to be indexed, inclusive.
+     * @param maxDegreesLongitude
+     *         Between -180.0 and 180.0, which are farthest West and East respectively. The White House of the United
+     *         States is at -77.036586 degrees longitude. This value is the eastern most boundary to be indexed,
+     *         inclusive.
+     * @return A map instance that can be used for querying locations withing the provided coordinates, inclusive.
+     * @throws IllegalArgumentException
+     *         If minimum values aren't less than maximum values.
      * @see #forRegion(InputStream, double, double, double, double)
      */
     public static TimeZoneMap forRegion(double minDegreesLatitude, double minDegreesLongitude,
@@ -94,6 +116,7 @@ public final class TimeZoneMap {
      * @return A map instance that can be used for querying locations withing the provided coordinates, inclusive.
      * @throws IllegalArgumentException
      *         If minimum values aren't less than maximum values.
+     * @see #forRegion(double, double, double, double)
      */
     public static TimeZoneMap forRegion(InputStream tarInputStream, double minDegreesLatitude,
             double minDegreesLongitude, double maxDegreesLatitude, double maxDegreesLongitude) {

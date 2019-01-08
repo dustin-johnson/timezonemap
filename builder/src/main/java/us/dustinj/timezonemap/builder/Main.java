@@ -8,12 +8,12 @@ import java.io.OutputStream;
 import java.net.URL;
 import java.nio.ByteBuffer;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -144,12 +144,12 @@ public class Main {
         // return Stream.of(new TimeZone("Consolidated_" + timeZoneId, regions.collect(Collectors.toList())));
     }
 
-    private static void build(UnaryIoOperator<OutputStream> compressionProvider, String argument, String outputPath)
-            throws IOException {
-        try (ZipInputStream zipInputStream = new ZipInputStream(createInputStream(argument))) {
+    private static void build(String mapDataLocation,
+            List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs) throws IOException {
+        try (ZipInputStream zipInputStream = new ZipInputStream(createInputStream(mapDataLocation))) {
             zipInputStream.getNextEntry();
             FeatureCollection featureCollection = new ObjectMapper().readValue(zipInputStream, FeatureCollection.class);
-            Iterator<Pair<String, ByteBuffer>> serializedTimeZones = featureCollection.getFeatures().stream()
+            List<Pair<String, ByteBuffer>> serializedTimeZones = featureCollection.getFeatures().stream()
                     .flatMap(Main::convertFeatureToTimeZones)
                     .map(Main::cleanseRegion)
                     // Filter all regions that are now empty after cleansing
@@ -162,20 +162,21 @@ public class Main {
                     .map(p -> new Pair<>(
                             p.second.getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.first),
                             Serialization.serializeTimeZone(p.second)))
-                    .iterator();
+                    .collect(Collectors.toList());
 
-            writeMapArchive(compressionProvider, outputPath, serializedTimeZones);
+            for (Pair<UnaryIoOperator<OutputStream>, Path> compressionAndOutputPath : compressionAndOutputPathPairs) {
+                writeMapArchive(compressionAndOutputPath.first, compressionAndOutputPath.second, serializedTimeZones);
+            }
         }
     }
 
-    private static void writeMapArchive(UnaryIoOperator<OutputStream> compressionProvider, String outputPath,
-            Iterator<Pair<String, ByteBuffer>> serializedTimeZones) throws IOException {
-        Files.createDirectories(Paths.get(outputPath).getParent());
+    private static void writeMapArchive(UnaryIoOperator<OutputStream> compressionProvider, Path outputPath,
+            Collection<Pair<String, ByteBuffer>> serializedTimeZones) throws IOException {
+        Files.createDirectories(outputPath.getParent());
 
         try (TarArchiveOutputStream out =
-                new TarArchiveOutputStream(compressionProvider.apply(new FileOutputStream(outputPath)))) {
-            while (serializedTimeZones.hasNext()) {
-                Pair<String, ByteBuffer> pair = serializedTimeZones.next();
+                new TarArchiveOutputStream(compressionProvider.apply(new FileOutputStream(outputPath.toString())))) {
+            for (Pair<String, ByteBuffer> pair : serializedTimeZones) {
                 String filename = pair.first;
                 ByteBuffer serializedTimeZone = pair.second;
                 TarArchiveEntry entry = new TarArchiveEntry(filename);
@@ -189,11 +190,20 @@ public class Main {
     }
 
     public static void main(String[] args) throws IOException {
-        if (args.length == 2) {
-            build(ZstdCompressorOutputStream::new, args[0], args[1]);
+        UnaryIoOperator<OutputStream> zstd = stream -> new ZstdCompressorOutputStream(stream, 22);
+
+        if (args.length >= 3) {
+            List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs = new ArrayList<>();
+            for (int i = 2; i < args.length; i += 2) {
+                UnaryIoOperator<OutputStream> compression = args[i - 1].equals("zstd") ? zstd : stream -> stream;
+                compressionAndOutputPathPairs.add(new Pair<>(compression, Paths.get(args[i])));
+            }
+
+            build(args[0], compressionAndOutputPathPairs);
         } else {
-            build(stream -> stream, "C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip",
-                    "C:\\Users\\Dustin\\gitroot\\timezonemap\\float.tar");
+            build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip", Arrays.asList(
+                    new Pair<>(s -> s, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar")),
+                    new Pair<>(zstd, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar.zstd"))));
         }
     }
 }
