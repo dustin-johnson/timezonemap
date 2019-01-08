@@ -6,6 +6,8 @@ import com.esri.core.geometry.GeometryEngine;
 import com.esri.core.geometry.Point;
 import com.esri.core.geometry.Polygon;
 
+import us.dustinj.timezonemap.utils.Preconditions;
+
 /**
  * The time zone identifier (e.g. {@code America/Los_Angeles}, {@code Europe/Berlin}, {@code Etc/GMT+5},
  * {@code Asia/Shanghai}) and the region on Earth that the time zone covers.
@@ -60,7 +62,8 @@ public final class TimeZone {
      */
     public double getDistanceFromBoundary(double degreesLatitude, double degreesLongitude) {
         Point location = new Point(degreesLongitude, degreesLatitude);
-        Util.precondition(Util.containsInclusive(this.region, location), "Location must be inside the time zone");
+        Preconditions.checkArgument(Util.containsInclusive(this.region, location),
+                "Location must be inside the time zone");
 
         return GeometryEngine.geodesicDistanceOnWGS84(location,
                 GeometryEngine.getNearestCoordinate(this.getRegion(), location, false).getCoordinate());

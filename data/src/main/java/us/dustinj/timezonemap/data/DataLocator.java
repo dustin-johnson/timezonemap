@@ -1,14 +1,13 @@
 package us.dustinj.timezonemap.data;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.util.AbstractMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
+
+import us.dustinj.timezonemap.utils.Preconditions;
+import us.dustinj.timezonemap.utils.Properties;
 
 @SuppressWarnings("WeakerAccess")
 public class DataLocator {
@@ -32,22 +31,11 @@ public class DataLocator {
     }
 
     private static Map<String, String> getProperties() {
-        InputStream inputStream = DataLocator.class.getResourceAsStream("/timezonemap-data.properties");
-        checkLoadedInputStream(inputStream);
-
-        return new BufferedReader(new InputStreamReader(inputStream)).lines()
-                .map(String::trim)
-                .filter(line -> !line.startsWith("#"))
-                .map(line -> line.split("=", 2))
-                .map(lineFragments -> new AbstractMap.SimpleEntry<>(lineFragments[0],
-                        lineFragments[1].replace("\\", "")))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return Properties.getProperties(DataLocator.class, "timezonemap-data.properties");
     }
 
     static void checkLoadedInputStream(InputStream stream) {
-        if (stream == null) {
-            throw new IllegalStateException("Time zone data is not found. Perhaps there is an issue with the class " +
-                    "loader or this is being run from the IDE without having built with maven first.");
-        }
+        Preconditions.checkState(stream != null, "Time zone data is not found. Perhaps there is an issue " +
+                "with the class loader or this is being run from the IDE without having built with maven first.");
     }
 }

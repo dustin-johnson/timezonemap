@@ -52,6 +52,7 @@
     </properties>
 
     <modules>
+        <module>utils</module>
         <module>serialization</module>
         <module>builder</module>
         <module>data</module>

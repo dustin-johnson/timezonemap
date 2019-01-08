@@ -22,12 +22,6 @@ final class Util {
                 GeometryEngine.touches(outer, inner, SPATIAL_REFERENCE);
     }
 
-    static void precondition(boolean test, String message) {
-        if (!test) {
-            throw new IllegalArgumentException(message);
-        }
-    }
-
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         Polygon newPolygon = new Polygon();
 

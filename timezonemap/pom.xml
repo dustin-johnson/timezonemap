@@ -58,6 +58,11 @@
             <artifactId>timezonemap-serialization</artifactId>
             <version>${project.version}</version>
         </dependency>
+        <dependency>
+            <groupId>us.dustinj.timezonemap</groupId>
+            <artifactId>timezonemap-utils</artifactId>
+            <version>${project.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>

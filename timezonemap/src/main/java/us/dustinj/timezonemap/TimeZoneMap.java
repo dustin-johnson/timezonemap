@@ -34,6 +34,8 @@ import com.esri.core.geometry.SimpleGeometryCursor;
 import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Envelope;
 import us.dustinj.timezonemap.serialization.Serialization;
+import us.dustinj.timezonemap.utils.Preconditions;
+import us.dustinj.timezonemap.utils.Properties;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
@@ -126,9 +128,9 @@ public final class TimeZoneMap {
      */
     public static TimeZoneMap forRegion(InputStream tarInputStream, double minDegreesLatitude,
             double minDegreesLongitude, double maxDegreesLatitude, double maxDegreesLongitude) {
-        Util.precondition(minDegreesLatitude < maxDegreesLatitude,
+        Preconditions.checkArgument(minDegreesLatitude < maxDegreesLatitude,
                 "Minimum latitude must be less than maximum latitude");
-        Util.precondition(minDegreesLongitude < maxDegreesLongitude,
+        Preconditions.checkArgument(minDegreesLongitude < maxDegreesLongitude,
                 "Minimum longitude must be less than maximum longitude");
 
         Envelope2D indexAreaEnvelope = new Envelope2D(minDegreesLongitude, minDegreesLatitude,
@@ -314,7 +316,7 @@ public final class TimeZoneMap {
     private Stream<TimeZone> getOverlappingTimeZoneStream(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
-        Util.precondition(this.initializedRegion.contains(point.getXY()),
+        Preconditions.checkArgument(this.initializedRegion.contains(point.getXY()),
                 "Requested point is outside the initialized area");
 
         return this.timeZones.stream()
@@ -356,19 +358,7 @@ public final class TimeZoneMap {
     }
 
     private static String getRequiredMapVersion() {
-        return getProperties().get("mapVersion");
-    }
-
-    private static Map<String, String> getProperties() {
-        InputStream inputStream = TimeZoneMap.class.getResourceAsStream("/timezonemap.properties");
-
-        return new BufferedReader(new InputStreamReader(inputStream)).lines()
-                .map(String::trim)
-                .filter(line -> !line.startsWith("#"))
-                .map(line -> line.split("=", 2))
-                .map(lineFragments -> new AbstractMap.SimpleEntry<>(lineFragments[0],
-                        lineFragments[1].replace("\\", "")))
-                .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+        return Properties.getProperties(TimeZoneMap.class, "timezonemap.properties").get("mapVersion");
     }
 
     private static class ExtentsAndTimeZone {

@@ -80,13 +80,4 @@ public class UtilTest {
         assertThat(Util.containsInclusive(squareWithIsland, new Point(10f, 10f))).isFalse(); // Main area
         assertThat(Util.containsInclusive(squareWithIsland, new Point(1.4f, 1.8f))).isFalse(); // Hole area
     }
-
-    @Test
-    public void precondition() {
-        Util.precondition(true, "Ensure no exception is thrown");
-        //noinspection ConstantConditions
-        assertThatThrownBy(() -> Util.precondition(false, "Exception text"))
-                .hasMessage("Exception text")
-                .isInstanceOf(IllegalArgumentException.class);
-    }
 }

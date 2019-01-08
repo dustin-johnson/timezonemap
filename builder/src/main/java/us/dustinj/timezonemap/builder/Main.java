@@ -37,19 +37,9 @@ import us.dustinj.timezonemap.serialization.Envelope;
 import us.dustinj.timezonemap.serialization.LatLon;
 import us.dustinj.timezonemap.serialization.Serialization;
 import us.dustinj.timezonemap.serialization.TimeZone;
+import us.dustinj.timezonemap.utils.Pair;
 
 public class Main {
-
-    private static class Pair<X, Y> {
-        final X first;
-        final Y second;
-
-        private Pair(X first, Y second) {
-            this.first = first;
-            this.second = second;
-        }
-    }
-
     private interface UnaryIoOperator<T> {
         T apply(T t) throws IOException;
     }
@@ -160,13 +150,14 @@ public class Main {
                             .isPresent())
                     .map(t -> new Pair<>(getBoundingBox(t), t))
                     .map(p -> new Pair<>(
-                            p.second.getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.first),
-                            Serialization.serializeTimeZone(p.second)))
+                            p.getSecond().getTimeZoneId() + "/" + Serialization.serializeEnvelope(p.getFirst()),
+                            Serialization.serializeTimeZone(p.getSecond())))
                     .collect(Collectors.toList());
             serializedTimeZones.add(0, new Pair<>(mapArchiveVersion, ByteBuffer.allocate(0)));
 
             for (Pair<UnaryIoOperator<OutputStream>, Path> compressionAndOutputPath : compressionAndOutputPathPairs) {
-                writeMapArchive(compressionAndOutputPath.first, compressionAndOutputPath.second, serializedTimeZones);
+                writeMapArchive(compressionAndOutputPath.getFirst(), compressionAndOutputPath.getSecond(),
+                        serializedTimeZones);
             }
         }
     }
@@ -178,8 +169,8 @@ public class Main {
         try (TarArchiveOutputStream out =
                 new TarArchiveOutputStream(compressionProvider.apply(new FileOutputStream(outputPath.toString())))) {
             for (Pair<String, ByteBuffer> pair : serializedTimeZones) {
-                String filename = pair.first;
-                ByteBuffer serializedTimeZone = pair.second;
+                String filename = pair.getFirst();
+                ByteBuffer serializedTimeZone = pair.getSecond();
                 TarArchiveEntry entry = new TarArchiveEntry(filename);
 
                 entry.setSize(serializedTimeZone.remaining());
