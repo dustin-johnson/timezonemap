@@ -11,8 +11,10 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -123,6 +125,44 @@ public class TimeZoneMapTest {
                     .as("Scoped - " + location.description)
                     .isEqualTo(everywhereResults);
         }
+    }
+
+    @Test
+    public void timeshapeTests() {
+        assertThat(EVERYWHERE.getOverlappingTimeZone(52.52, 13.40).map(TimeZone::getZoneId))
+                .contains("Europe/Berlin");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(56.49771, 84.97437).map(TimeZone::getZoneId))
+                .contains("Asia/Tomsk");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.459229, -70.645348).map(TimeZone::getZoneId))
+                .contains("America/Santiago");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(56.01839, 92.86717).map(TimeZone::getZoneId))
+                .contains("Asia/Krasnoyarsk");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(5.345317, -4.024429).map(TimeZone::getZoneId))
+                .contains("Africa/Abidjan");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(40.785091, -73.968285).map(TimeZone::getZoneId))
+                .contains("America/New_York");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.865143, 151.215256).map(TimeZone::getZoneId))
+                .contains("Australia/Sydney");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(38.00, -15.2814).map(TimeZone::getZoneId))
+                .contains("Etc/GMT+1");
+
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9248).map(TimeZone::getZoneId))
+                .contains("Europe/Amsterdam");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9250).map(TimeZone::getZoneId))
+                .contains("Europe/Brussels");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4437, 4.9186).map(TimeZone::getZoneId))
+                .contains("Europe/Brussels");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4438, 4.9181).map(TimeZone::getZoneId))
+                .contains("Europe/Amsterdam");
+    }
+
+    @Test
+    public void ensureAllTimeZoneIdsMapToJava() {
+        assertThat(
+                EVERYWHERE.getTimeZones().stream()
+                        .map(TimeZone::getZoneId)
+                        .collect(Collectors.toList()))
+                .containsAnyElementsOf(java.time.ZoneId.getAvailableZoneIds());
     }
 
     @Test
