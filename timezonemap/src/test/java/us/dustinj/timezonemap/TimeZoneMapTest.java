@@ -166,6 +166,32 @@ public class TimeZoneMapTest {
     }
 
     @Test
+    public void forRegion_InputStream_invalidInput() throws IOException {
+        Path mapDirectory =
+                new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
+                        .toPath()                       // timezonemap/target/test-classes
+                        .getParent()                    // timezonemap/target
+                        .getParent()                    // timezonemap
+                        .resolve("src/test/resources"); // timezonemap/src/test/resources
+
+        assertThatThrownBy(
+                () -> TimeZoneMap.forRegion(new FileInputStream(mapDirectory.resolve("no_version_marker.tar").toFile()),
+                        1, 2, 3, 4))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Incompatible map archive")
+                .hasMessageContaining("test.txt");
+
+        assertThatThrownBy(
+                () -> TimeZoneMap
+                        .forRegion(new FileInputStream(mapDirectory.resolve("incompatible_version.tar").toFile()),
+                                1, 2, 3, 4))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Incompatible map archive")
+                .hasMessageContaining("1.0-SNAPSHOT:2017a");
+
+    }
+
+    @Test
     public void forRegion_InputStream() throws IOException {
         Location location = new Location(39.666304, -7.558607, "Europe/Lisbon", "Boarder between Spain and Portugal");
         Path mapDirectory =
@@ -334,6 +360,11 @@ public class TimeZoneMapTest {
         // because we don't care about subtle changes in the position of the Jamaica region, just that it exists.
         assertThat(map.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
                 .isCloseTo(1418, byLessThan(1_000.0));
+    }
+
+    @Test
+    public void getMapVersion() {
+        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.1:2018i");
     }
 
     @Test

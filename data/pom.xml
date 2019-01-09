@@ -44,7 +44,7 @@
                         <argument>-jar</argument>
                         <argument>timezonemap-builder-${project.version}.jar</argument>
                         <argument>${map.version}</argument>
-                        <argument>Version: ${map.archive.version}</argument>
+                        <argument>${map.archive.version}</argument>
                         <argument>uncompressed</argument>
                         <argument>${project.build.directory}/${map.uncompressed.filename}</argument>
                         <argument>zstd</argument>

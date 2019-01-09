@@ -141,10 +141,14 @@ public final class TimeZoneMap {
             AtomicReference<String> mapVersion = new AtomicReference<>(); // Atomic due to Java's lambda limitations
             List<TimeZone> timeZones = getTarEntryStream(archiveInputStream)
                     .peek(entry -> {
-                        if (mapVersion.get() == null && !entry.getName().endsWith(getRequiredMapVersion())) {
-                            throw new IllegalArgumentException(
-                                    "Incompatible map archive. Detected version is '" + entry.getName().split(" ")[1] +
-                                            "' required version '" + getRequiredMapVersion() + "'");
+                        if (mapVersion.get() == null) {
+                            String[] splitVersion = entry.getName().split(" ");
+                            String version = splitVersion.length == 2 ? splitVersion[1] : entry.getName();
+
+                            if (!version.equals(getRequiredMapVersion())) {
+                                throw new IllegalArgumentException("Incompatible map archive. Detected version is '" +
+                                        version + "' required version '" + getRequiredMapVersion() + "'");
+                            }
                         }
 
                         mapVersion.compareAndSet(null, getRequiredMapVersion());
@@ -218,7 +222,6 @@ public final class TimeZoneMap {
                                 .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
                     })
                     .collect(Collectors.toList());
-
 
             return new TimeZoneMap(mapVersion.get(), timeZones, indexAreaEnvelope);
         } catch (IOException e) {
