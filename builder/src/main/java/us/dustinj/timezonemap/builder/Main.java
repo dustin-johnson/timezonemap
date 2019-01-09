@@ -131,7 +131,6 @@ public class Main {
         }
 
         return regions.map(r -> new TimeZone(timeZoneId, Collections.singletonList(r)));
-        // return Stream.of(new TimeZone("Consolidated_" + timeZoneId, regions.collect(Collectors.toList())));
     }
 
     private static void build(String mapDataLocation, String mapArchiveVersion,
@@ -181,22 +180,24 @@ public class Main {
         }
     }
 
+    // Format: <inputShapeZip|versionToDownload> <outputMapVersion> <<uncompressed|zstd> <outputPath>>+
+    // Example: timezones-with-oceans.geojson.zip 3.1:2018i uncompressed map.tar zstd map.tar.zstd
     public static void main(String[] args) throws IOException {
         UnaryIoOperator<OutputStream> zstd = stream -> new ZstdCompressorOutputStream(stream, 22);
+        List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs = new ArrayList<>();
 
-        if (args.length >= 4) {
-            List<Pair<UnaryIoOperator<OutputStream>, Path>> compressionAndOutputPathPairs = new ArrayList<>();
+        try {
             for (int i = 3; i < args.length; i += 2) {
                 UnaryIoOperator<OutputStream> compression = args[i - 1].equals("zstd") ? zstd : stream -> stream;
                 compressionAndOutputPathPairs.add(new Pair<>(compression, Paths.get(args[i])));
             }
 
-            build(args[0], args[1], compressionAndOutputPathPairs);
-        } else {
-            build("C:\\Users\\Dustin\\Downloads\\timezones-with-oceans.geojson.zip", "Version: 3.1-SNAPSHOT:2018i",
-                    Arrays.asList(
-                            new Pair<>(s -> s, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar")),
-                            new Pair<>(zstd, Paths.get("C:\\Users\\Dustin\\gitroot\\timezonemap\\map.tar.zstd"))));
+            build(args[0], "Version: " + args[1], compressionAndOutputPathPairs);
+        } catch (Exception e) {
+            System.err.println("Error encountered.\n" +
+                    "Required format: <inputShapeZip|versionToDownload> <outputMapVersion> " +
+                    "<<uncompressed|zstd> <outputPath>>+\n");
+            e.printStackTrace(System.err);
         }
     }
 }
