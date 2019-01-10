@@ -11,13 +11,9 @@
     <artifactId>timezonemap-utils</artifactId>
     <packaging>jar</packaging>
 
-    <name>Time Zone Map Utlities</name>
+    <name>Time Zone Map Utilities</name>
 
     <properties>
         <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
     </properties>
-
-    <dependencies>
-
-    </dependencies>
 </project>

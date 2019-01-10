@@ -7,6 +7,15 @@ cache:
 script:
   - mvn test -DskipDataPackaging=true -B
 
+deploy:
+  provider: script
+  script: ./deployment/deploy.sh
+  on:
+    all_branches: true
+
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
+
 env:
   global:
     - # After lots of trial and error, I discovered that the encryption ought to be performed as -> travis encrypt "OSSRH_JIRA_USERNAME='username with spaces and @ symbols'"
@@ -16,7 +25,3 @@ env:
     - # ^^ GPG_KEY_NAME
     - secure: "h+z9MFUXZSuM1j96fqr1m/mSxKE0WnzNpbZXcOG70EQQX3DcDsZ8G/7baVwb4Zy7AtPHVmGoUt5ms7iw1qWC/F4eL/qs1V6vEWlrRxMUgK/LOzCE5wlthYtTxeyObD5+MDBA6acj0ey/RcdNpAT1VcIX60ivQu1K6WMYYyUdIyh0IJ8m0eGPDp9tMYOaFxBBSnDMh7Tq0qMpsulvUEvbLOvQr4v4+qturO9Sc+ytiLZXYWuarJB/ou7hK/ex8ZuwrVNHFd2m6DLQhrGXN0LM+hZVKgHsHr+bHmw6a/U7PgQk2ZPd+HC6tAakdBxOT6ZzM1dm6Rght+XZIkezXJTLR7QNHvYoOtoMByFgd0x7NRAk5OXLngggaOAc45Tz5iUnpxPOHoxHTLwI2mcDUa2yBk6xZDEqqTQfaIIKJES6dy1NTJfO+15p4rgqFkLZD0AK9AWwDTBu6YiWOb5vqlVfsG6fSna6y/AGZ+VdqohstfcfV10Evo+9BQH1vtfzXRdeiZqK6aSYersZFW+8zsvII0KPsLEYRXEE8xxQg1zPcyD2k2TP24zkuPphVFSiNt8qMat+C2tXykPuaUhr0Pct9lW1OiTrXnNTFMjygvJER9v85UIJYlRkVfxrLqTKk5xDGpBPcOXnVX6CUGdrk7HG6bxjALeRHLnytatKA7/+zAQ="
     - # ^^ GPG_PASSPHRASE
-
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
-  - ./deployment/deploy.sh
