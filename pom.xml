@@ -4,7 +4,7 @@
     <groupId>us.dustinj.timezonemap</groupId>
     <artifactId>timezonemap-parent</artifactId>
     <packaging>pom</packaging>
-    <version>3.2-SNAPSHOT</version>
+    <version>3.2</version>
 
     <name>Time Zone Map Parent</name>
     <description>A library for getting time zone information from location data.</description>
