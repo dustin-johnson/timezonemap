@@ -364,7 +364,7 @@ public class TimeZoneMapTest {
 
     @Test
     public void getMapVersion() {
-        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.2:2018i");
+        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.3-SNAPSHOT:2018i");
     }
 
     @Test
