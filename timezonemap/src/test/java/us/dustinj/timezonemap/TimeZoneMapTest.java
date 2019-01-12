@@ -12,6 +12,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.ZoneId;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -19,6 +20,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
+import org.apache.commons.compress.utils.CountingInputStream;
 import org.geojson.Feature;
 import org.geojson.FeatureCollection;
 import org.geojson.GeoJsonObject;
@@ -207,7 +209,7 @@ public class TimeZoneMapTest {
                                 path.toString().endsWith(".tar"))
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("Unable to find the uncompressed map archive"));
-        InputStream mapInputStream = new FileInputStream(map.toFile());
+        CountingInputStream mapInputStream = new CountingInputStream(new FileInputStream(map.toFile()));
 
         List<String> result = TimeZoneMap.forRegion(
                 mapInputStream,
@@ -222,6 +224,7 @@ public class TimeZoneMapTest {
         assertThat(result)
                 .as(location.description)
                 .isEqualTo(location.timeZoneIds);
+        assertThat(mapInputStream.getBytesRead()).isLessThan(1_500_000);
     }
 
     @Test
@@ -360,6 +363,18 @@ public class TimeZoneMapTest {
         // because we don't care about subtle changes in the position of the Jamaica region, just that it exists.
         assertThat(map.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
                 .isCloseTo(1418, byLessThan(1_000.0));
+    }
+
+    @Test
+    public void name() {
+        EVERYWHERE.getTimeZones().stream()
+                .map(TimeZone::getZoneId)
+                .map(t -> t.split("/"))
+                .map(a -> a[a.length - 1])
+                .map(t -> t.replace("_", " "))
+                .distinct()
+                .sorted(Comparator.comparing(String::length))
+                .forEach(System.out::println);
     }
 
     @Test

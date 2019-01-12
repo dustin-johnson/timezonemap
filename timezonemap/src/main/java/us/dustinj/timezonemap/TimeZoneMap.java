@@ -39,6 +39,8 @@ import us.dustinj.timezonemap.utils.Properties;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
+    private static final String REQUIRED_MAP_VERSION = getRequiredMapVersion();
+
     private final String mapVersion;
     private final List<TimeZone> timeZones;
     private final Envelope2D initializedRegion;
@@ -145,13 +147,13 @@ public final class TimeZoneMap {
                             String[] splitVersion = entry.getName().split(" ");
                             String version = splitVersion.length == 2 ? splitVersion[1] : entry.getName();
 
-                            if (!version.equals(getRequiredMapVersion())) {
+                            if (!version.equals(REQUIRED_MAP_VERSION)) {
                                 throw new IllegalArgumentException("Incompatible map archive. Detected version is '" +
-                                        version + "' required version '" + getRequiredMapVersion() + "'");
+                                        version + "' required version '" + REQUIRED_MAP_VERSION + "'");
                             }
                         }
 
-                        mapVersion.compareAndSet(null, getRequiredMapVersion());
+                        mapVersion.compareAndSet(null, REQUIRED_MAP_VERSION);
                     })
                     .filter(entry -> entry.getSize() > 0)
                     // The name of each file is an envelope that is the outside boundary of the time zone. This
