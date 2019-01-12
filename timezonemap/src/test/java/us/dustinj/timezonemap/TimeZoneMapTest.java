@@ -366,18 +366,6 @@ public class TimeZoneMapTest {
     }
 
     @Test
-    public void name() {
-        EVERYWHERE.getTimeZones().stream()
-                .map(TimeZone::getZoneId)
-                .map(t -> t.split("/"))
-                .map(a -> a[a.length - 1])
-                .map(t -> t.replace("_", " "))
-                .distinct()
-                .sorted(Comparator.comparing(String::length))
-                .forEach(System.out::println);
-    }
-
-    @Test
     public void getMapVersion() {
         assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.3-SNAPSHOT:2018i");
     }

@@ -2,12 +2,10 @@ package us.dustinj.timezonemap.data;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.util.Map;
 
 import org.apache.commons.compress.compressors.zstandard.ZstdCompressorInputStream;
 
 import us.dustinj.timezonemap.utils.Preconditions;
-import us.dustinj.timezonemap.utils.Properties;
 
 @SuppressWarnings("WeakerAccess")
 public class DataLocator {
@@ -23,15 +21,11 @@ public class DataLocator {
     }
 
     public static String getMapArchiveFilename() {
-        return getProperties().get("mapFilename");
+        return BuildInformation.MAP_FILENAME;
     }
 
     public static String getMapVersion() {
-        return getProperties().get("mapVersion");
-    }
-
-    private static Map<String, String> getProperties() {
-        return Properties.getProperties(DataLocator.class, "timezonemap-data.properties");
+        return BuildInformation.MAP_VERSION;
     }
 
     static void checkLoadedInputStream(InputStream stream) {

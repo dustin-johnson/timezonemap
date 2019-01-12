@@ -1,16 +1,12 @@
 package us.dustinj.timezonemap;
 
-import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.nio.ByteBuffer;
-import java.util.AbstractMap;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
@@ -35,12 +31,9 @@ import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Envelope;
 import us.dustinj.timezonemap.serialization.Serialization;
 import us.dustinj.timezonemap.utils.Preconditions;
-import us.dustinj.timezonemap.utils.Properties;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
-    private static final String REQUIRED_MAP_VERSION = getRequiredMapVersion();
-
     private final String mapVersion;
     private final List<TimeZone> timeZones;
     private final Envelope2D initializedRegion;
@@ -147,13 +140,13 @@ public final class TimeZoneMap {
                             String[] splitVersion = entry.getName().split(" ");
                             String version = splitVersion.length == 2 ? splitVersion[1] : entry.getName();
 
-                            if (!version.equals(REQUIRED_MAP_VERSION)) {
+                            if (!version.split(":")[0].equals(getVersion())) {
                                 throw new IllegalArgumentException("Incompatible map archive. Detected version is '" +
-                                        version + "' required version '" + REQUIRED_MAP_VERSION + "'");
+                                        version + "' required version '" + getVersion() + ":*'");
                             }
-                        }
 
-                        mapVersion.compareAndSet(null, REQUIRED_MAP_VERSION);
+                            mapVersion.compareAndSet(null, version);
+                        }
                     })
                     .filter(entry -> entry.getSize() > 0)
                     // The name of each file is an envelope that is the outside boundary of the time zone. This
@@ -362,8 +355,8 @@ public final class TimeZoneMap {
         return StreamSupport.stream(spliterator, false);
     }
 
-    private static String getRequiredMapVersion() {
-        return Properties.getProperties(TimeZoneMap.class, "timezonemap.properties").get("mapVersion");
+    private static String getVersion() {
+        return BuildInformation.VERSION;
     }
 
     private static class ExtentsAndTimeZone {

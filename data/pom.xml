@@ -52,28 +52,15 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>com.internetitem</groupId>
-                <artifactId>write-properties-file-maven-plugin</artifactId>
-                <version>1.0.1</version>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>templating-maven-plugin</artifactId>
+                <version>1.0.0</version>
                 <executions>
                     <execution>
-                        <phase>compile</phase>
+                        <id>filter-src</id>
                         <goals>
-                            <goal>write-properties-file</goal>
+                            <goal>filter-sources</goal>
                         </goals>
-                        <configuration>
-                            <filename>timezonemap-data.properties</filename>
-                            <properties>
-                                <property>
-                                    <name>mapVersion</name>
-                                    <value>${map.archive.version}</value>
-                                </property>
-                                <property>
-                                    <name>mapFilename</name>
-                                    <value>${map.zstd.filename}</value>
-                                </property>
-                            </properties>
-                        </configuration>
                     </execution>
                 </executions>
             </plugin>
