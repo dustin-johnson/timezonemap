@@ -196,6 +196,7 @@ public final class TimeZoneMap {
             for (ExtentsAndTimeZone t : timeZones) {
                 if (indexAreaEnvelope.contains(t.extents)) {
                     flatMap.add(t.timeZone);
+                    continue;
                 }
 
                 GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
