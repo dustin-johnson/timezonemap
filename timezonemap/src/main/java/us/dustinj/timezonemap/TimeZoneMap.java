@@ -1,41 +1,24 @@
 package us.dustinj.timezonemap;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.ByteBuffer;
-import java.util.AbstractMap;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Spliterator;
-import java.util.Spliterators;
-import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Consumer;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
-import java.util.stream.StreamSupport;
-
+import com.esri.core.geometry.*;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
-
-import com.esri.core.geometry.Envelope2D;
-import com.esri.core.geometry.Geometry;
-import com.esri.core.geometry.GeometryCursor;
-import com.esri.core.geometry.OperatorIntersection;
-import com.esri.core.geometry.Point;
-import com.esri.core.geometry.Polygon;
-import com.esri.core.geometry.SimpleGeometryCursor;
-
 import us.dustinj.timezonemap.data.DataLocator;
 import us.dustinj.timezonemap.serialization.Envelope;
 import us.dustinj.timezonemap.serialization.Serialization;
 import us.dustinj.timezonemap.utils.Preconditions;
 import us.dustinj.timezonemap.utils.Properties;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.ByteBuffer;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
@@ -139,89 +122,106 @@ public final class TimeZoneMap {
 
         try (TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(tarInputStream)) {
             AtomicReference<String> mapVersion = new AtomicReference<>(); // Atomic due to Java's lambda limitations
-            List<TimeZone> timeZones = getTarEntryStream(archiveInputStream)
-                    .peek(entry -> {
-                        if (mapVersion.get() == null) {
-                            String[] splitVersion = entry.getName().split(" ");
-                            String version = splitVersion.length == 2 ? splitVersion[1] : entry.getName();
+            List<TimeZone> timeZones = new ArrayList<>();
+            TarArchiveEntry entry;
+            while ((entry = archiveInputStream.getNextTarEntry()) != null) {
+                if (mapVersion.get() == null) {
+                    String[] splitVersion = entry.getName().split(" ");
+                    String version = splitVersion.length == 2 ? splitVersion[1] : entry.getName();
 
-                            if (!version.equals(getRequiredMapVersion())) {
-                                throw new IllegalArgumentException("Incompatible map archive. Detected version is '" +
-                                        version + "' required version '" + getRequiredMapVersion() + "'");
-                            }
-                        }
+                    if (!version.equals(getRequiredMapVersion())) {
+                        throw new IllegalArgumentException("Incompatible map archive. Detected version is '" +
+                                version + "' required version '" + getRequiredMapVersion() + "'");
+                    }
+                }
 
-                        mapVersion.compareAndSet(null, getRequiredMapVersion());
-                    })
-                    .filter(entry -> entry.getSize() > 0)
-                    // The name of each file is an envelope that is the outside boundary of the time zone. This
-                    // allows us to immediately filter out any time zones that don't overlap the initialization
-                    // region without having to deserialize the region, which is a fairly expensive operation.
-                    .filter(entry -> {
-                        String[] fragmentedName = entry.getName().split("/");
-                        String serializedEnvelope = fragmentedName[fragmentedName.length - 1];
-                        Envelope envelope = Serialization.deserializeEnvelope(serializedEnvelope);
+                mapVersion.compareAndSet(null, getRequiredMapVersion());
 
-                        return indexAreaEnvelope.isIntersecting(
-                                envelope.getLowerLeftCorner().getLongitude(),
-                                envelope.getLowerLeftCorner().getLatitude(),
-                                envelope.getUpperRightCorner().getLongitude(),
-                                envelope.getUpperRightCorner().getLatitude());
-                    })
-                    .map(n -> {
-                        try {
-                            ByteBuffer byteBuffer = ByteBuffer.wrap(new byte[(int) n.getSize()]);
-                            int readLength;
+                if (entry.getSize() <= 0)
+                    continue;
 
-                            while ((readLength = archiveInputStream.read(byteBuffer.array(),
-                                    byteBuffer.position(), byteBuffer.remaining())) != -1) {
-                                byteBuffer.position(byteBuffer.position() + readLength);
-                            }
+                String[] fragmentedName = entry.getName().split("/");
+                String serializedEnvelope = fragmentedName[fragmentedName.length - 1];
+                Envelope envelope = Serialization.deserializeEnvelope(serializedEnvelope);
 
-                            byteBuffer.position(0);
+                if (!indexAreaEnvelope.isIntersecting(
+                        envelope.getLowerLeftCorner().getLongitude(),
+                        envelope.getLowerLeftCorner().getLatitude(),
+                        envelope.getUpperRightCorner().getLongitude(),
+                        envelope.getUpperRightCorner().getLatitude()))
+                    continue;
 
-                            return byteBuffer;
-                        } catch (IOException e) {
-                            throw new IllegalStateException("Unable to load time zone file " + n.getName(), e);
-                        }
-                    })
-                    .map(Serialization::deserializeTimeZone)
-                    .map(Util::convertToEsriBackedTimeZone)
-                    .map(timeZone -> {
-                        Envelope2D extents = new Envelope2D();
-                        timeZone.getRegion().queryEnvelope2D(extents);
+                ByteBuffer byteBuffer;
+                try {
+                    byteBuffer = ByteBuffer.wrap(new byte[(int) entry.getSize()]);
+                    int readLength;
 
-                        return new ExtentsAndTimeZone(extents, timeZone);
-                    })
-                    // Throw out anything that doesn't at least partially overlap with the index area.
-                    .filter(t -> indexAreaEnvelope.isIntersecting(t.extents))
-                    // Sort smallest area first so we have a deterministic ordering of there is an overlap.
-                    .sorted(Comparator.comparingDouble(t -> t.timeZone.getRegion().calculateArea2D()))
+                    while ((readLength = archiveInputStream.read(byteBuffer.array(),
+                            byteBuffer.position(), byteBuffer.remaining())) != -1) {
+                        byteBuffer.position(byteBuffer.position() + readLength);
+                    }
+
+                    byteBuffer.position(0);
+                } catch (IOException e) {
+                    throw new IllegalStateException("Unable to load time zone file " + entry.getName(), e);
+                }
+
+                us.dustinj.timezonemap.serialization.TimeZone deserializedTimeZone = Serialization.deserializeTimeZone(byteBuffer);
+                TimeZone timeZone = Util.convertToEsriBackedTimeZone(deserializedTimeZone);
+
+                Envelope2D extents = new Envelope2D();
+                timeZone.getRegion().queryEnvelope2D(extents);
+
+                ExtentsAndTimeZone extentsAndTimeZone = new ExtentsAndTimeZone(extents, timeZone);
+                if (!indexAreaEnvelope.isIntersecting(extentsAndTimeZone.extents))
+                    continue;
+
+                timeZones.add(timeZone);
+
+            }
+
+            //sort
+            //TODO verify order
+            for (int i = 0; i < timeZones.size(); i++) {
+                for (int j = i + 1; j < timeZones.size(); j++) {
+                    if (timeZones.get(i).getRegion().calculateArea2D() > timeZones.get(j).getRegion().calculateArea2D()) {
+                        TimeZone temp = timeZones.get(i);
+                        timeZones.set(i, timeZones.get(j));
+                        timeZones.set(j, temp);
+                    }
+                }
+            }
+
+            //TODO flatmap
+
+
+
+//                    new Stream<>()
                     // Clip the shape to our indexArea so we don't have to keep large time zones that may
                     // only slightly intersect with the region we're indexing.
-                    .flatMap(t -> {
-                        if (indexAreaEnvelope.contains(t.extents)) {
-                            return Stream.of(t.timeZone);
-                        }
-
-                        GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
-                                new SimpleGeometryCursor(t.timeZone.getRegion()),
-                                new SimpleGeometryCursor(indexAreaPolygon),
-                                Util.SPATIAL_REFERENCE, null, -1);
-
-                        List<Polygon> list = new ArrayList<>();
-                        Geometry geometry;
-                        while ((geometry = intersectedGeometries.next()) != null) {
-                            // Since we're intersecting polygons, the only thing we can get back must be 2 dimensional,
-                            // so it's safe to cast everything we get back as a polygon.
-                            list.add((Polygon) geometry);
-                        }
-
-                        return list.stream()
-                                .filter(g -> g.getPointCount() > 0)
-                                .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
-                    })
-                    .collect(Collectors.toList());
+//                    .flatMap(t -> {
+//                        if (indexAreaEnvelope.contains(t.extents)) {
+//                            return Stream.of(t.timeZone);
+//                        }
+//
+//                        GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
+//                                new SimpleGeometryCursor(t.timeZone.getRegion()),
+//                                new SimpleGeometryCursor(indexAreaPolygon),
+//                                Util.SPATIAL_REFERENCE, null, -1);
+//
+//                        List<Polygon> list = new ArrayList<>();
+//                        Geometry geometry;
+//                        while ((geometry = intersectedGeometries.next()) != null) {
+//                            // Since we're intersecting polygons, the only thing we can get back must be 2 dimensional,
+//                            // so it's safe to cast everything we get back as a polygon.
+//                            list.add((Polygon) geometry);
+//                        }
+//
+//                        return list.stream()
+//                                .filter(g -> g.getPointCount() > 0)
+//                                .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
+//                    })
+//                    .collect(Collectors.toList());
 
             return new TimeZoneMap(mapVersion.get(), timeZones, indexAreaEnvelope);
         } catch (IOException e) {
@@ -336,28 +336,6 @@ public final class TimeZoneMap {
         polygon.lineTo(envelope.xmin, envelope.ymax); // Upper left
 
         return polygon;
-    }
-
-    private static Stream<TarArchiveEntry> getTarEntryStream(TarArchiveInputStream f) {
-        Spliterator<TarArchiveEntry> spliterator =
-                new Spliterators.AbstractSpliterator<TarArchiveEntry>(Long.MAX_VALUE, 0) {
-                    @Override
-                    public boolean tryAdvance(Consumer<? super TarArchiveEntry> action) {
-                        try {
-                            TarArchiveEntry entry = f.getNextTarEntry();
-                            if (entry != null) {
-                                action.accept(entry);
-                                return true;
-                            } else {
-                                return false;
-                            }
-                        } catch (IOException e) {
-                            throw new IllegalStateException("Unable to read time zone data resource file", e);
-                        }
-                    }
-                };
-
-        return StreamSupport.stream(spliterator, false);
     }
 
     private static String getRequiredMapVersion() {
