@@ -181,7 +181,6 @@ public final class TimeZoneMap {
             }
 
             //sort
-            //TODO verify order
             for (int i = 0; i < timeZones.size(); i++) {
                 for (int j = i + 1; j < timeZones.size(); j++) {
                     if (timeZones.get(i).timeZone.getRegion().calculateArea2D() > timeZones.get(j).timeZone.getRegion().calculateArea2D()) {
