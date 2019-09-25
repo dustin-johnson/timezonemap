@@ -122,7 +122,7 @@ public final class TimeZoneMap {
 
         try (TarArchiveInputStream archiveInputStream = new TarArchiveInputStream(tarInputStream)) {
             AtomicReference<String> mapVersion = new AtomicReference<>(); // Atomic due to Java's lambda limitations
-            List<TimeZone> timeZones = new ArrayList<>();
+            List<ExtentsAndTimeZone> timeZones = new ArrayList<>();
             TarArchiveEntry entry;
             while ((entry = archiveInputStream.getNextTarEntry()) != null) {
                 if (mapVersion.get() == null) {
@@ -176,7 +176,7 @@ public final class TimeZoneMap {
                 if (!indexAreaEnvelope.isIntersecting(extentsAndTimeZone.extents))
                     continue;
 
-                timeZones.add(timeZone);
+                timeZones.add(extentsAndTimeZone);
 
             }
 
@@ -184,46 +184,41 @@ public final class TimeZoneMap {
             //TODO verify order
             for (int i = 0; i < timeZones.size(); i++) {
                 for (int j = i + 1; j < timeZones.size(); j++) {
-                    if (timeZones.get(i).getRegion().calculateArea2D() > timeZones.get(j).getRegion().calculateArea2D()) {
-                        TimeZone temp = timeZones.get(i);
+                    if (timeZones.get(i).timeZone.getRegion().calculateArea2D() > timeZones.get(j).timeZone.getRegion().calculateArea2D()) {
+                        ExtentsAndTimeZone temp = timeZones.get(i);
                         timeZones.set(i, timeZones.get(j));
                         timeZones.set(j, temp);
                     }
                 }
             }
 
-            //TODO flatmap
+            List<TimeZone> flatMap = new ArrayList<>();
+            for (ExtentsAndTimeZone t : timeZones) {
+                if (indexAreaEnvelope.contains(t.extents)) {
+                    flatMap.add(t.timeZone);
+                }
 
+                GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
+                        new SimpleGeometryCursor(t.timeZone.getRegion()),
+                        new SimpleGeometryCursor(indexAreaPolygon),
+                        Util.SPATIAL_REFERENCE, null, -1);
 
+                List<Polygon> list = new ArrayList<>();
+                Geometry geometry;
+                while ((geometry = intersectedGeometries.next()) != null) {
+                    // Since we're intersecting polygons, the only thing we can get back must be 2 dimensional,
+                    // so it's safe to cast everything we get back as a polygon.
+                    list.add((Polygon) geometry);
+                }
 
-//                    new Stream<>()
-                    // Clip the shape to our indexArea so we don't have to keep large time zones that may
-                    // only slightly intersect with the region we're indexing.
-//                    .flatMap(t -> {
-//                        if (indexAreaEnvelope.contains(t.extents)) {
-//                            return Stream.of(t.timeZone);
-//                        }
-//
-//                        GeometryCursor intersectedGeometries = OperatorIntersection.local().execute(
-//                                new SimpleGeometryCursor(t.timeZone.getRegion()),
-//                                new SimpleGeometryCursor(indexAreaPolygon),
-//                                Util.SPATIAL_REFERENCE, null, -1);
-//
-//                        List<Polygon> list = new ArrayList<>();
-//                        Geometry geometry;
-//                        while ((geometry = intersectedGeometries.next()) != null) {
-//                            // Since we're intersecting polygons, the only thing we can get back must be 2 dimensional,
-//                            // so it's safe to cast everything we get back as a polygon.
-//                            list.add((Polygon) geometry);
-//                        }
-//
-//                        return list.stream()
-//                                .filter(g -> g.getPointCount() > 0)
-//                                .map(g -> new TimeZone(t.timeZone.getZoneId(), g));
-//                    })
-//                    .collect(Collectors.toList());
+                for (Polygon g : list) {
+                    if (g.getPointCount() > 0) {
+                        flatMap.add(new TimeZone(t.timeZone.getZoneId(), g));
+                    }
+                }
+            }
 
-            return new TimeZoneMap(mapVersion.get(), timeZones, indexAreaEnvelope);
+            return new TimeZoneMap(mapVersion.get(), flatMap, indexAreaEnvelope);
         } catch (IOException e) {
             throw new IllegalStateException("Unable to read time zone data resource file", e);
         }
