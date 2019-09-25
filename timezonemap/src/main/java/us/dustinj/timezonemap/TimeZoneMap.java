@@ -173,11 +173,9 @@ public final class TimeZoneMap {
                 timeZone.getRegion().queryEnvelope2D(extents);
 
                 ExtentsAndTimeZone extentsAndTimeZone = new ExtentsAndTimeZone(extents, timeZone);
-                if (!indexAreaEnvelope.isIntersecting(extentsAndTimeZone.extents))
-                    continue;
-
-                timeZones.add(extentsAndTimeZone);
-
+                if (indexAreaEnvelope.isIntersecting(extentsAndTimeZone.extents)) {
+                    timeZones.add(extentsAndTimeZone);
+                }
             }
 
             //sort
