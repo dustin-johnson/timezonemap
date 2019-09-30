@@ -1,5 +1,6 @@
 package us.dustinj.timezonemap;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -25,9 +26,10 @@ final class Util {
     static TimeZone convertToEsriBackedTimeZone(us.dustinj.timezonemap.serialization.TimeZone timeZone) {
         Polygon newPolygon = new Polygon();
 
-        for (List<LatLon> region : timeZone.getRegions().stream()
-                .flatMap(Collection::stream)
-                .collect(Collectors.toList())) {
+        List<List<LatLon>> list = new ArrayList<>();
+        for (List<List<LatLon>> subList : timeZone.getRegions())
+            list.addAll(subList);
+        for (List<LatLon> region : list) {
             newPolygon.startPath(region.get(0).getLongitude(), region.get(0).getLatitude());
             region.subList(1, region.size())
                     .forEach(p -> newPolygon.lineTo(p.getLongitude(), p.getLatitude()));
