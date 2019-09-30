@@ -1,8 +1,15 @@
 package us.dustinj.timezonemap;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.assertj.core.api.Assertions.byLessThan;
+import com.esri.core.geometry.*;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableListMultimap;
+import com.google.common.collect.Multimaps;
+import org.geojson.Feature;
+import org.geojson.FeatureCollection;
+import org.geojson.GeoJsonObject;
+import org.junit.Ignore;
+import org.junit.Test;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,29 +18,13 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
-import org.geojson.Feature;
-import org.geojson.FeatureCollection;
-import org.geojson.GeoJsonObject;
-import org.junit.Ignore;
-import org.junit.Test;
-
-import com.esri.core.geometry.Envelope2D;
-import com.esri.core.geometry.GeometryEngine;
-import com.esri.core.geometry.GeometryException;
-import com.esri.core.geometry.OperatorSimplify;
-import com.esri.core.geometry.Polygon;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.collect.ImmutableList;
-import com.google.common.collect.ImmutableListMultimap;
-import com.google.common.collect.Multimaps;
+import static org.assertj.core.api.Assertions.*;
 
 @SuppressWarnings("OptionalGetWithoutIsPresent")
 public class TimeZoneMapTest {

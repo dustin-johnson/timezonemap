@@ -301,7 +301,7 @@ public final class TimeZoneMap {
      * @throws IllegalArgumentException
      *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
-    private List<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
+    public List<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
         Preconditions.checkArgument(this.initializedRegion.contains(point.getXY()),
