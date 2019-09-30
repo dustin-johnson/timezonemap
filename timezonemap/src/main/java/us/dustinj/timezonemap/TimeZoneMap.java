@@ -17,8 +17,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @SuppressWarnings("WeakerAccess")
 public final class TimeZoneMap {
@@ -279,8 +277,7 @@ public final class TimeZoneMap {
      *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
     public Optional<TimeZone> getOverlappingTimeZone(double degreesLatitude, double degreesLongitude) {
-        return getOverlappingTimeZoneStream(degreesLatitude, degreesLongitude)
-                .findFirst();
+        return Optional.ofNullable(getOverlappingTimeZones(degreesLatitude, degreesLongitude).get(0));
     }
 
     /**
@@ -304,19 +301,19 @@ public final class TimeZoneMap {
      * @throws IllegalArgumentException
      *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
-    public List<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
-        return getOverlappingTimeZoneStream(degreesLatitude, degreesLongitude)
-                .collect(Collectors.toList());
-    }
-
-    private Stream<TimeZone> getOverlappingTimeZoneStream(double degreesLatitude, double degreesLongitude) {
+    private List<TimeZone> getOverlappingTimeZones(double degreesLatitude, double degreesLongitude) {
         Point point = new Point(degreesLongitude, degreesLatitude);
 
         Preconditions.checkArgument(this.initializedRegion.contains(point.getXY()),
                 "Requested point is outside the initialized area");
 
-        return this.timeZones.stream()
-                .filter(t -> Util.containsInclusive(t.getRegion(), point));
+        List<TimeZone> overlapping = new ArrayList<>();
+
+        for (TimeZone zone : this.timeZones)
+            if (Util.containsInclusive(zone.getRegion(), point))
+                overlapping.add(zone);
+
+        return overlapping;
     }
 
     static Polygon envelopeToPolygon(Envelope2D envelope) {
