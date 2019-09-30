@@ -15,7 +15,6 @@ import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
 @SuppressWarnings("WeakerAccess")
@@ -276,8 +275,8 @@ public final class TimeZoneMap {
      * @throws IllegalArgumentException
      *         If the provided coordinates are outside of the area indexed by this instance of the time zone index.
      */
-    public Optional<TimeZone> getOverlappingTimeZone(double degreesLatitude, double degreesLongitude) {
-        return Optional.ofNullable(getOverlappingTimeZones(degreesLatitude, degreesLongitude).get(0));
+    public TimeZone getOverlappingTimeZone(double degreesLatitude, double degreesLongitude) {
+        return getOverlappingTimeZones(degreesLatitude, degreesLongitude).get(0);
     }
 
     /**
