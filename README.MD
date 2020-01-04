@@ -51,9 +51,11 @@ timeZone.observesDaylightTime(); // Returns true
 #### Android
 ```gradle
 implementation('us.dustinj.timezonemap:timezonemap:3.3') {
-    exclude group: 'com.github.luben', module: 'zstd-jni' // Exclude standard compression library
+    // Exclude standard compression library
+    exclude group: 'com.github.luben', module: 'zstd-jni'
 }
-implementation 'com.github.luben:zstd-jni:1.4.4-3@aar' // Import aar for native component compilation
+// Import aar for native component compilation
+implementation 'com.github.luben:zstd-jni:1.4.4-3@aar'
 ```
 
 ## Licenses

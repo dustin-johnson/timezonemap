@@ -6,7 +6,7 @@
 6.  Update maven and gradle import examples in `README.MD`.
 7.  Delete local maven cache for `us.dustinj.timezonemap`: `rm -rf ~/.m2/repository/us/dustinj/timezonemap/`
 8.  `mvn clean install`
-9.  `git commit -am "Update version to vXXX"`
+9.  `git commit -am "Update version to v3.3"`
 10. `git push`
-11. `git tag -a vXXX -m "Release vXXX"`
-12. `git push origin vXXX`
+11. `git tag -a v3.3 -m "Release v3.3"`
+12. `git push origin v3.3`
