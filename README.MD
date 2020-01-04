@@ -44,13 +44,13 @@ timeZone.observesDaylightTime(); // Returns true
 <dependency>
     <groupId>us.dustinj.timezonemap</groupId>
     <artifactId>timezonemap</artifactId>
-    <version>3.3</version>
+    <version>3.4</version>
 </dependency>
 ```
 
 #### Android
 ```gradle
-implementation('us.dustinj.timezonemap:timezonemap:3.3') {
+implementation('us.dustinj.timezonemap:timezonemap:3.4') {
     // Exclude standard compression library
     exclude group: 'com.github.luben', module: 'zstd-jni'
 }
