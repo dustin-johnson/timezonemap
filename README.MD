@@ -49,6 +49,8 @@ timeZone.observesDaylightTime(); // Returns true
 ```
 
 #### Android
+This library has been tested down to Android ADK 19 (KitKat 4.4), which was released in 2013.
+
 ```gradle
 implementation('us.dustinj.timezonemap:timezonemap:3.4') {
     // Exclude standard compression library

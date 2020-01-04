@@ -4,8 +4,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.byLessThan;
 
-import java.io.IOException;
-
 import org.junit.Test;
 
 import com.esri.core.geometry.Polygon;

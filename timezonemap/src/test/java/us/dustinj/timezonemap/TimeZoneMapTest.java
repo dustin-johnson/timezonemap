@@ -11,7 +11,6 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -33,7 +32,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableListMultimap;
 import com.google.common.collect.Multimaps;
 
-@SuppressWarnings("OptionalGetWithoutIsPresent")
+@SuppressWarnings("ConstantConditions")
 public class TimeZoneMapTest {
     private static final TimeZoneMap EVERYWHERE = TimeZoneMap.forEverywhere();
 
@@ -101,14 +100,14 @@ public class TimeZoneMapTest {
                             .stream()
                             .map(TimeZone::getZoneId)
                             .collect(Collectors.toList());
-            Optional<String> everywhereResult =
-                    EVERYWHERE.getOverlappingTimeZone(location.latitude, location.longitude).map(TimeZone::getZoneId);
+            String everywhereResult =
+                    EVERYWHERE.getOverlappingTimeZone(location.latitude, location.longitude).getZoneId();
             assertThat(everywhereResults)
                     .as("Everywhere - All time zones - " + location.description)
                     .isEqualTo(location.timeZoneIds);
             assertThat(everywhereResult)
                     .as("Everywhere - Single time zone - " + location.description)
-                    .contains(location.timeZoneIds.get(0));
+                    .isEqualTo(location.timeZoneIds.get(0));
 
             List<String> scopedResult = TimeZoneMap.forRegion(
                     location.latitude - 1,
@@ -127,31 +126,19 @@ public class TimeZoneMapTest {
 
     @Test
     public void timeshapeTests() {
-        assertThat(EVERYWHERE.getOverlappingTimeZone(52.52, 13.40).map(TimeZone::getZoneId))
-                .contains("Europe/Berlin");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(56.49771, 84.97437).map(TimeZone::getZoneId))
-                .contains("Asia/Tomsk");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.459229, -70.645348).map(TimeZone::getZoneId))
-                .contains("America/Santiago");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(56.01839, 92.86717).map(TimeZone::getZoneId))
-                .contains("Asia/Krasnoyarsk");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(5.345317, -4.024429).map(TimeZone::getZoneId))
-                .contains("Africa/Abidjan");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(40.785091, -73.968285).map(TimeZone::getZoneId))
-                .contains("America/New_York");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.865143, 151.215256).map(TimeZone::getZoneId))
-                .contains("Australia/Sydney");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(38.00, -15.2814).map(TimeZone::getZoneId))
-                .contains("Etc/GMT+1");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(52.52, 13.40).getZoneId()).isEqualTo("Europe/Berlin");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(56.49771, 84.97437).getZoneId()).isEqualTo("Asia/Tomsk");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.459229, -70.645348).getZoneId()).isEqualTo("America/Santiago");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(56.01839, 92.86717).getZoneId()).isEqualTo("Asia/Krasnoyarsk");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(5.345317, -4.024429).getZoneId()).isEqualTo("Africa/Abidjan");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(40.785091, -73.968285).getZoneId()).isEqualTo("America/New_York");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(-33.865143, 151.215256).getZoneId()).isEqualTo("Australia/Sydney");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(38.00, -15.2814).getZoneId()).isEqualTo("Etc/GMT+1");
 
-        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9248).map(TimeZone::getZoneId))
-                .contains("Europe/Amsterdam");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9250).map(TimeZone::getZoneId))
-                .contains("Europe/Brussels");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4437, 4.9186).map(TimeZone::getZoneId))
-                .contains("Europe/Brussels");
-        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4438, 4.9181).map(TimeZone::getZoneId))
-                .contains("Europe/Amsterdam");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9248).getZoneId()).isEqualTo("Europe/Amsterdam");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4457, 4.9250).getZoneId()).isEqualTo("Europe/Brussels");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4437, 4.9186).getZoneId()).isEqualTo("Europe/Brussels");
+        assertThat(EVERYWHERE.getOverlappingTimeZone(51.4438, 4.9181).getZoneId()).isEqualTo("Europe/Amsterdam");
     }
 
     @Test
@@ -164,7 +151,7 @@ public class TimeZoneMapTest {
     }
 
     @Test
-    public void forRegion_InputStream_invalidInput() throws IOException {
+    public void forRegion_InputStream_invalidInput() {
         Path mapDirectory =
                 new File(TimeZoneMapTest.class.getProtectionDomain().getCodeSource().getLocation().getFile())
                         .toPath()                       // timezonemap/target/test-classes
@@ -246,7 +233,6 @@ public class TimeZoneMapTest {
     @Test
     @Ignore
     public void dumpTimeZonesToFiles() throws IOException {
-        @SuppressWarnings("ConstantConditions")
         ImmutableListMultimap<String, TimeZone> timeZones =
                 Multimaps.index(EVERYWHERE.getTimeZones(), TimeZone::getZoneId);
         List<TimeZone> renamedTimeZones = timeZones.asMap().entrySet().stream()
@@ -254,7 +240,7 @@ public class TimeZoneMapTest {
                         .mapToObj(i -> new TimeZone(e.getKey() + "_" + i,
                                 ((List<TimeZone>) e.getValue()).get(i).getRegion())))
                 .map(t -> new TimeZone(t.getZoneId(), (Polygon)
-                        OperatorSimplify.local().execute(t.getRegion(), Util.SPATIAL_REFERENCE,
+                        OperatorSimplify.local().execute(t.getRegion(), Util.getSPATIAL_REFERENCE(),
                                 true, null)))
                 .collect(Collectors.toList());
 
@@ -322,11 +308,11 @@ public class TimeZoneMapTest {
         // Takes some time (~1-5 seconds) to initialize, so try and initialize only once and keep it.
         TimeZoneMap map = TimeZoneMap.forRegion(43.5, 8.0, 53.00, 26.0);
 
-        String berlin = map.getOverlappingTimeZone(52.518424, 13.404776).get().getZoneId(); // Returns "Europe/Berlin"
-        String prague = map.getOverlappingTimeZone(50.074154, 14.437403).get().getZoneId(); // Returns "Europe/Prague"
-        String budapest = map.getOverlappingTimeZone(47.49642, 19.04970).get().getZoneId(); // Returns "Europe/Budapest"
-        String milan = map.getOverlappingTimeZone(45.466677, 9.188258).get().getZoneId();   // Returns "Europe/Rome"
-        String adriaticSea = map.getOverlappingTimeZone(44.337, 13.8282).get().getZoneId(); // Returns "Etc/GMT-1"
+        String berlin = map.getOverlappingTimeZone(52.518424, 13.404776).getZoneId(); // Returns "Europe/Berlin"
+        String prague = map.getOverlappingTimeZone(50.074154, 14.437403).getZoneId(); // Returns "Europe/Prague"
+        String budapest = map.getOverlappingTimeZone(47.49642, 19.04970).getZoneId(); // Returns "Europe/Budapest"
+        String milan = map.getOverlappingTimeZone(45.466677, 9.188258).getZoneId();   // Returns "Europe/Rome"
+        String adriaticSea = map.getOverlappingTimeZone(44.337, 13.8282).getZoneId(); // Returns "Etc/GMT-1"
 
         // --------------------
 
@@ -352,12 +338,12 @@ public class TimeZoneMapTest {
                 19.085664, -77.747903);
 
         // Right next to the boundary's edge to show that the time zone distance is clipped by the map index region.
-        assertThat(map.getOverlappingTimeZone(18, -79.67).get().getDistanceFromBoundary(18, -79.67))
+        assertThat(map.getOverlappingTimeZone(18, -79.67).getDistanceFromBoundary(18, -79.67))
                 .isCloseTo(44, byLessThan(0.1));
 
         // Next to the hole created by Jamaica to ensure we deal with the hole correctly. Use a loose tolerance
         // because we don't care about subtle changes in the position of the Jamaica region, just that it exists.
-        assertThat(map.getOverlappingTimeZone(18.378, -78.57).get().getDistanceFromBoundary(18.378, -78.57))
+        assertThat(map.getOverlappingTimeZone(18.378, -78.57).getDistanceFromBoundary(18.378, -78.57))
                 .isCloseTo(1418, byLessThan(1_000.0));
     }
 
@@ -381,20 +367,20 @@ public class TimeZoneMapTest {
         assertThatThrownBy(() -> map.getOverlappingTimeZone(3.97131, Math.nextUp(28.10539)))
                 .isInstanceOf(IllegalArgumentException.class);
 
-        assertThat(map.getOverlappingTimeZone(10.29621, 22.78090).map(TimeZone::getZoneId))
-                .contains("Africa/Bangui"); // Upper left corner
-        assertThat(map.getOverlappingTimeZone(3.97131, 28.10539).map(TimeZone::getZoneId))
-                .contains("Africa/Lubumbashi"); // Lower right corner
+        assertThat(map.getOverlappingTimeZone(10.29621, 22.78090).getZoneId())
+                .isEqualTo("Africa/Bangui"); // Upper left corner
+        assertThat(map.getOverlappingTimeZone(3.97131, 28.10539).getZoneId())
+                .isEqualTo("Africa/Lubumbashi"); // Lower right corner
 
         // Check a few interesting places in this oddly time zoned region
-        assertThat(map.getOverlappingTimeZone(10.225818, 24.293622).map(TimeZone::getZoneId))
-                .contains("Africa/Khartoum");
-        assertThat(map.getOverlappingTimeZone(10.134434, 25.520542).map(TimeZone::getZoneId))
-                .contains("Africa/Juba");
-        assertThat(map.getOverlappingTimeZone(10.018797, 26.681882).map(TimeZone::getZoneId))
-                .contains("Africa/Khartoum");
-        assertThat(map.getOverlappingTimeZone(5.150331, 27.348469).map(TimeZone::getZoneId))
-                .contains("Africa/Bangui");
+        assertThat(map.getOverlappingTimeZone(10.225818, 24.293622).getZoneId())
+                .isEqualTo("Africa/Khartoum");
+        assertThat(map.getOverlappingTimeZone(10.134434, 25.520542).getZoneId())
+                .isEqualTo("Africa/Juba");
+        assertThat(map.getOverlappingTimeZone(10.018797, 26.681882).getZoneId())
+                .isEqualTo("Africa/Khartoum");
+        assertThat(map.getOverlappingTimeZone(5.150331, 27.348469).getZoneId())
+                .isEqualTo("Africa/Bangui");
     }
 
     @Test
@@ -404,16 +390,16 @@ public class TimeZoneMapTest {
                 40.169102, -123.283836,
                 40.169103, -77.030765);
 
-        assertThat(map.getOverlappingTimeZone(40.169102, -123.283836).map(TimeZone::getZoneId))
-                .contains("America/Los_Angeles");
-        assertThat(map.getOverlappingTimeZone(40.169102, -106.843598).map(TimeZone::getZoneId))
-                .contains("America/Denver");
-        assertThat(map.getOverlappingTimeZone(40.169102, -93.821612).map(TimeZone::getZoneId))
-                .contains("America/Chicago");
-        assertThat(map.getOverlappingTimeZone(40.169102, -86.164327).map(TimeZone::getZoneId))
-                .contains("America/Indiana/Indianapolis");
-        assertThat(map.getOverlappingTimeZone(40.169102, -77.030765).map(TimeZone::getZoneId))
-                .contains("America/New_York");
+        assertThat(map.getOverlappingTimeZone(40.169102, -123.283836).getZoneId())
+                .isEqualTo("America/Los_Angeles");
+        assertThat(map.getOverlappingTimeZone(40.169102, -106.843598).getZoneId())
+                .isEqualTo("America/Denver");
+        assertThat(map.getOverlappingTimeZone(40.169102, -93.821612).getZoneId())
+                .isEqualTo("America/Chicago");
+        assertThat(map.getOverlappingTimeZone(40.169102, -86.164327).getZoneId())
+                .isEqualTo("America/Indiana/Indianapolis");
+        assertThat(map.getOverlappingTimeZone(40.169102, -77.030765).getZoneId())
+                .isEqualTo("America/New_York");
     }
 
     @Test

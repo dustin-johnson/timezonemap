@@ -74,11 +74,6 @@
             <version>${project.version}</version>
             <scope>provided</scope>
         </dependency>
-        <dependency>
-            <groupId>us.dustinj.timezonemap</groupId>
-            <artifactId>timezonemap-utils</artifactId>
-            <version>${project.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.apache.commons</groupId>

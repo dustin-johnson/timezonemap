@@ -14,7 +14,7 @@
     <name>Time Zone Map</name>
 
     <properties>
-        <jacoco.minimum.covered.ratio>1.00</jacoco.minimum.covered.ratio>
+        <jacoco.minimum.covered.ratio>0.98</jacoco.minimum.covered.ratio>
     </properties>
 
     <build>
@@ -44,11 +44,6 @@
         <dependency>
             <groupId>us.dustinj.timezonemap</groupId>
             <artifactId>timezonemap-serialization</artifactId>
-            <version>${project.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>us.dustinj.timezonemap</groupId>
-            <artifactId>timezonemap-utils</artifactId>
             <version>${project.version}</version>
         </dependency>
 
