@@ -53,7 +53,7 @@ timeZone.observesDaylightTime(); // Returns true
 implementation('us.dustinj.timezonemap:timezonemap:3.3') {
     exclude group: 'com.github.luben', module: 'zstd-jni' // Exclude standard compression library
 }
-implementation 'com.github.luben:zstd-jni:1.3.8-1@aar' // Import aar for native component compilation
+implementation 'com.github.luben:zstd-jni:1.4.4-3@aar' // Import aar for native component compilation
 ```
 
 ## Licenses

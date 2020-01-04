@@ -11,7 +11,7 @@ import com.google.flatbuffers.*;
 public final class Polygon extends Table {
   public static Polygon getRootAsPolygon(ByteBuffer _bb) { return getRootAsPolygon(_bb, new Polygon()); }
   public static Polygon getRootAsPolygon(ByteBuffer _bb, Polygon obj) { _bb.order(ByteOrder.LITTLE_ENDIAN); return (obj.__assign(_bb.getInt(_bb.position()) + _bb.position(), _bb)); }
-  public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; }
+  public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; vtable_start = bb_pos - bb.getInt(bb_pos); vtable_size = bb.getShort(vtable_start); }
   public Polygon __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public Ring rings(int j) { return rings(new Ring(), j); }

@@ -7,15 +7,11 @@ import static org.assertj.core.api.Assertions.byLessThan;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.ZoneId;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
@@ -367,7 +363,7 @@ public class TimeZoneMapTest {
 
     @Test
     public void getMapVersion() {
-        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.3-SNAPSHOT:2018i");
+        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("3.3-SNAPSHOT:2019b");
     }
 
     @Test

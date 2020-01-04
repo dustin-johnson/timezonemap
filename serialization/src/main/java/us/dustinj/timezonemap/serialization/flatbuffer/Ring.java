@@ -11,7 +11,7 @@ import com.google.flatbuffers.*;
 public final class Ring extends Table {
   public static Ring getRootAsRing(ByteBuffer _bb) { return getRootAsRing(_bb, new Ring()); }
   public static Ring getRootAsRing(ByteBuffer _bb, Ring obj) { _bb.order(ByteOrder.LITTLE_ENDIAN); return (obj.__assign(_bb.getInt(_bb.position()) + _bb.position(), _bb)); }
-  public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; }
+  public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; vtable_start = bb_pos - bb.getInt(bb_pos); vtable_size = bb.getShort(vtable_start); }
   public Ring __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
   public Point points(int j) { return points(new Point(), j); }
