@@ -349,7 +349,7 @@ public class TimeZoneMapTest {
 
     @Test
     public void getMapVersion() {
-        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("4.0-SNAPSHOT:2019b");
+        assertThat(EVERYWHERE.getMapVersion()).isEqualTo("4.0:2019b");
     }
 
     @Test
