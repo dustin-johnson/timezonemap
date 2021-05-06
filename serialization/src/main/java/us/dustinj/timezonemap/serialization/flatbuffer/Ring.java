@@ -9,28 +9,38 @@ import com.google.flatbuffers.*;
 
 @SuppressWarnings("unused")
 public final class Ring extends Table {
+  public static void ValidateVersion() { Constants.FLATBUFFERS_1_12_0(); }
   public static Ring getRootAsRing(ByteBuffer _bb) { return getRootAsRing(_bb, new Ring()); }
   public static Ring getRootAsRing(ByteBuffer _bb, Ring obj) { _bb.order(ByteOrder.LITTLE_ENDIAN); return (obj.__assign(_bb.getInt(_bb.position()) + _bb.position(), _bb)); }
-  public void __init(int _i, ByteBuffer _bb) { bb_pos = _i; bb = _bb; vtable_start = bb_pos - bb.getInt(bb_pos); vtable_size = bb.getShort(vtable_start); }
+  public void __init(int _i, ByteBuffer _bb) { __reset(_i, _bb); }
   public Ring __assign(int _i, ByteBuffer _bb) { __init(_i, _bb); return this; }
 
-  public Point points(int j) { return points(new Point(), j); }
-  public Point points(Point obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o) + j * 8, bb) : null; }
+  public us.dustinj.timezonemap.serialization.flatbuffer.Point points(int j) { return points(new us.dustinj.timezonemap.serialization.flatbuffer.Point(), j); }
+  public us.dustinj.timezonemap.serialization.flatbuffer.Point points(us.dustinj.timezonemap.serialization.flatbuffer.Point obj, int j) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o) + j * 8, bb) : null; }
   public int pointsLength() { int o = __offset(4); return o != 0 ? __vector_len(o) : 0; }
+  public us.dustinj.timezonemap.serialization.flatbuffer.Point.Vector pointsVector() { return pointsVector(new us.dustinj.timezonemap.serialization.flatbuffer.Point.Vector()); }
+  public us.dustinj.timezonemap.serialization.flatbuffer.Point.Vector pointsVector(us.dustinj.timezonemap.serialization.flatbuffer.Point.Vector obj) { int o = __offset(4); return o != 0 ? obj.__assign(__vector(o), 8, bb) : null; }
 
   public static int createRing(FlatBufferBuilder builder,
       int pointsOffset) {
-    builder.startObject(1);
+    builder.startTable(1);
     Ring.addPoints(builder, pointsOffset);
     return Ring.endRing(builder);
   }
 
-  public static void startRing(FlatBufferBuilder builder) { builder.startObject(1); }
+  public static void startRing(FlatBufferBuilder builder) { builder.startTable(1); }
   public static void addPoints(FlatBufferBuilder builder, int pointsOffset) { builder.addOffset(0, pointsOffset, 0); }
   public static void startPointsVector(FlatBufferBuilder builder, int numElems) { builder.startVector(8, numElems, 4); }
   public static int endRing(FlatBufferBuilder builder) {
-    int o = builder.endObject();
+    int o = builder.endTable();
     return o;
+  }
+
+  public static final class Vector extends BaseVector {
+    public Vector __assign(int _vector, int _element_size, ByteBuffer _bb) { __reset(_vector, _element_size, _bb); return this; }
+
+    public Ring get(int j) { return get(new Ring(), j); }
+    public Ring get(Ring obj, int j) {  return obj.__assign(__indirect(__element(j), bb), bb); }
   }
 }
 
