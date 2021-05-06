@@ -5,7 +5,7 @@ if [[ "$TRAVIS_BRANCH" =~ v[0-9](\.[0-9])+ ]] || ([[ "$TRAVIS_BRANCH" = release/
     openssl aes-256-cbc -K $encrypted_3253fed51ff9_key -iv $encrypted_3253fed51ff9_iv -in deployment/codesigning.asc.enc -out deployment/codesigning.asc -d
     gpg --fast-import deployment/codesigning.asc
 
-    mvn deploy -DskipDataPackaging=true -DskipTests=true -P sign,build-extras --settings deployment/maven_settings.xml
+    mvn deploy -DskipDataPackaging=true -DskipTests=true -P sign --settings deployment/maven_settings.xml
 else
     echo "Deploy skipped"
 fi
