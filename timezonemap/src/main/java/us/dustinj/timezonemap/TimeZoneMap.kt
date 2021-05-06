@@ -198,7 +198,7 @@ class TimeZoneMap private constructor(
                                 ByteBuffer.wrap(ByteArray(entry.size.toInt())).apply {
                                     var readLength: Int
                                     while (archiveInputStream.read(array(), position(),
-                                                    remaining()).also { readLength = it } != -1) {
+                                                    remaining()).also { readLength = it } > 0) {
                                         position(position() + readLength)
                                     }
                                     position(0)
