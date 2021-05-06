@@ -45,8 +45,8 @@
         <map.version>2020d</map.version>
         <map.archive.version>${project.version}:${map.version}</map.archive.version>
 
-        <zstd.version>1.4.4-3</zstd.version>
-        <esri.version>2.2.3</esri.version>
+        <zstd.version>1.4.9-5</zstd.version>
+        <esri.version>2.2.4</esri.version>
         <kotlin.version>1.4.32</kotlin.version>
     </properties>
 
