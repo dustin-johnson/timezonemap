@@ -4,7 +4,7 @@
     <groupId>us.dustinj.timezonemap</groupId>
     <artifactId>timezonemap-parent</artifactId>
     <packaging>pom</packaging>
-    <version>4.0</version>
+    <version>4.1-SNAPSHOT</version>
 
     <name>Time Zone Map Parent</name>
     <description>A library for getting time zone information from location data.</description>
@@ -42,7 +42,7 @@
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
         <!-- From: https://github.com/evansiroky/timezone-boundary-builder/releases/ -->
-        <map.version>2019b</map.version>
+        <map.version>2020d</map.version>
         <map.archive.version>${project.version}:${map.version}</map.archive.version>
 
         <zstd.version>1.4.4-3</zstd.version>
@@ -63,15 +63,6 @@
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </snapshotRepository>
     </distributionManagement>
-
-    <!-- For the Dokka Plugin -->
-    <pluginRepositories>
-        <pluginRepository>
-            <id>jcenter</id>
-            <name>JCenter</name>
-            <url>https://jcenter.bintray.com/</url>
-        </pluginRepository>
-    </pluginRepositories>
 
     <build>
         <plugins>
@@ -204,74 +195,37 @@
                 </plugins>
             </build>
         </profile>
-        <profile>
-            <id>build-extras</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>3.2.1</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                    <plugin>
-                        <groupId>org.jetbrains.dokka</groupId>
-                        <artifactId>dokka-maven-plugin</artifactId>
-                        <version>0.10.0</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadoc</id>
-                                <phase>package</phase>
-                                <goals>
-                                    <goal>javadocJar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
     </profiles>
 
     <dependencies>
         <dependency>
             <groupId>junit</groupId>
             <artifactId>junit</artifactId>
-            <version>4.13</version>
+            <version>4.13.2</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.mockito</groupId>
             <artifactId>mockito-core</artifactId>
-            <version>3.2.4</version>
+            <version>3.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>org.assertj</groupId>
             <artifactId>assertj-core</artifactId>
-            <version>3.14.0</version>
+            <version>3.19.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>nl.jqno.equalsverifier</groupId>
             <artifactId>equalsverifier</artifactId>
-            <version>3.1.11</version>
+            <version>3.6</version>
             <scope>test</scope>
         </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>28.2-jre</version>
+            <version>30.1.1-jre</version>
             <scope>test</scope>
         </dependency>
         <dependency>
