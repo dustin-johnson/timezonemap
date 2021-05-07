@@ -44,7 +44,7 @@ timeZone.observesDaylightTime(); // Returns true
 <dependency>
     <groupId>us.dustinj.timezonemap</groupId>
     <artifactId>timezonemap</artifactId>
-    <version>4.4</version>
+    <version>4.5</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ timeZone.observesDaylightTime(); // Returns true
 This library has been tested down to Android SDK 19 (KitKat 4.4), which was released in 2013.
 
 ```gradle
-implementation('us.dustinj.timezonemap:timezonemap:4.4`) {
+implementation('us.dustinj.timezonemap:timezonemap:4.5`) {
     // Exclude standard compression library
     exclude group: 'com.github.luben', module: 'zstd-jni'
 }
